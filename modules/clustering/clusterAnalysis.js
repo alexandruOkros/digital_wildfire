@@ -1,104 +1,143 @@
+//var PriorityQueue = require('./priority-queue.js');
 
-
-// using assumption that the sentiment data contains an array of entities and a sentiment score)
-
-
-//cluster is an array of tweets, clusters is an array of clusters
-
-// finds 3 most occurring strings in an array of strings
-function modeCalc(a) {
-    var counter = {};
-    var mode1 = "";
-    var mode2 = "";
-    var mode3 = "";
-    var max1 = 0;
-    var max2 = 0;
-    var max3 = 0;
-    for (var i in a) {
-        if (!(a[i] in counter))
-            counter[a[i]] = 0;
-        counter[a[i]]++;
+//returns an array with 'number' most occurring strings from array 'a'
+//if there are less than 'number' strings, the remaining entries in the returned array are all the empty string
+function modeCalc(a, number) {
  
-        if (counter[a[i]] >= max1) 
-        {
-            if (a[i] != mode1) {
-            	mode3 = mode2;
-        		max3 = max2;
-        		mode2 = mode1;
-        		max2 = max1;
-        		mode1 = a[i];
-        		max1 = counter[a[i]];
-        	}
-        	else {
-        		max1 = counter[a[i]]
-        	}
-        }
-        else if (counter[a[i]] >= max2)
-        {	
-        	if (a[i] != mode2){
-        		mode3 = mode2;
-        		mox3 = max2;
-        		mode2 = a[i];
-        		max2 = counter[a[i]];
-        	}
-        	else {
-        		max2 = counter[a[i]]
-        	}
-        }
-        else if (counter[a[i]] > max3) {
-            mode3 = a[i];
-            max3 = counter[a[i]];
-            
-        }
+	function clusterCount(entity, count) {
+		this.ent = entity;
+		this.val = count;
+	}
+	compareCount = function( entity1, entity2)  {
+    var ans = 0;
+    if (entity1 != undefined && entity2 != undefined)
+		  ans = (entity2.val - entity1.val);
+    return ans;
+	}
+	var maxOrder = new PriorityQueue({comparator : compareCount});
+
+    
+  var counter = {};    
+  for (var i in a) {
+    if (!(a[i] in counter)) {
+        counter[a[i]] = 0;
+        console.log(a[i] + " put in counter");
     }
-    var ans = [mode1,mode2,mode3]
-    return ans; 
+    counter[a[i]]++;
+ 	}
+ 	var done = {};
+ 	for (var i in a) {
+ 		if (!(a[i] in done)) {
+      var k = new clusterCount(a[i],counter[a[i]]);
+      console.log(" " + k.val);
+ 			maxOrder.queue(k);
+ 			done[a[i]] = 1;
+      console.log(a[i] + " done")
+ 		}
+ 	}
+ 	var ans = [];
+ 	for (i =0 ; i < number; i++ ) {
+    ans[i] = "";
+    try {
+ 	    var answer = maxOrder.dequeue();
+      ans[i]= answer.ent;
+    }
+    catch(err) {}
+ 	}   
+  return ans;  
+
 }
 //TODO: check it works^^
 
 
-
+//cluster is an array of tweets
+//clusters is an array of clusters
 // to find 3 most common entitities
 // entitiesCluster(array of tweets, sentiment data) : [String]
-function entitiesCluster(cluster,sentiments) {
+
+
+  //var popular = []
+function entitiesCluster(cluster) {
 	var concatEntities = [];
-	for (i = 0; i < cluster.length; i++) {
-		var ent = cluster[i].entities;
-		concatEntities = concatEntities.concat(ent);
-	}
-	var popular = modeCalc(concatEntities);
-	return popular;
+
+
+  function callbackEntities(entities, error) {
+
+    for (i = 0; i < entities.length; i++) {
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        concatEntities.push(ent);
+      }
+    }
+    popular = modeCalc(concatEntities,3);
+    console.log(popular);
+  }
+    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackEntities);
+    //return popular;
 }
 
 //  returns array of tweets that have all three keywords found by entitiesCluster
-function relevantTweetsCluster(cluster,sentiments) {
-	var entitiesMain = entitiesCluster(cluster,sentiments);
-	var rel = [];
-	for (i = 0 ; i < cluster.length; i++){
-		var ent = cluster[i].entities;
-		if (ent.contains(entitiesMain[0]) && ent.contains(entitiesMain[1]) && ent.contains(entitiesMain[2])) {
-			rel.push(cluster[i]);
-		}
+function relevantTweetsCluster(cluster) {
+	//var entitiesMain = entitiesCluster(cluster,sentiments);
+ 
+  function callbackRelevant(entities, error) {
+
+    var concatEntities = [];
+    for (i = 0; i < entities.length; i++) {
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        concatEntities.push(ent);
+      }
+    }
+    popular = modeCalc(concatEntities,3);
+      
+    console.log(popular);
+    var rel = [];
+    for (i = 0; i < entities.length; i++) {
+      var allEnt = [];
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        allEnt.push(ent);
+      }
+      if(allEnt.contains(popular[0]) && allEnt.contains(popular[1]) && allEnt.contains(popular[2])) 
+      console.log(cluster.tweets[i].text)
+      rel.push(cluster.tweets[i]);
+    }
+  }
+
+	//for (i = 0 ; i < cluster.length; i++){
+		//var twt = cluster[i]tweets;
+		//Alchemy.entitiesTweet(twt,callbackRelevant)
+    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackRelevant);
+    //if (ent.contains(entitiesMain[0]) && ent.contains(entitiesMain[1]) && ent.contains(entitiesMain[2])) {
+		//rel.push(cluster[i]);
+		//}
 	}
-	return rel;
+
+	
+
+
 }
 // returns average sentiment of the cluster calculated as the mean
-function sentimentCluster(cluster,sentiments) {
+function sentimentCluster(cluster) {
 	var sent = 0;
-	for (i = 0; i< cluster.length; i++) {
-		sent = sent + cluster[i].sentiment;
-	}
-	var avg = sent/(cluster.length);
-	return avg;
+	function callbackSenti(sentiment,error){
+    for (i = 0; i< sentiment.length; i++) {
+		  sent = sent + sentiment[i].score;
+	  }
+	  var avg = sent/(sentiment.length);
+    console.log(avg);
+  }
+  Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
 }
-//TODO: find a better way to calculate location?
+// TODO: find a better way to calculate location?
 // returns mean location of the cluster
-function locationCluster(cluster,sentiments) {
+/* function locationCluster(cluster) {
 	var sum = [0,0];
 	var hasloc= 0;
 
-	for (i = 0; i< cluster.length; i++) {
-		if (cluster[i].hasLocation) {
+	for (i = 0; i < cluster.length; i++) {
+		if (cluster[i].hasLocation()) {
 			hasloc = hasloc + 1;
 			sum[0] = sum[0] + cluster[i].getLocation[0];
 			sum[1] = sum[1] + cluster[i].getLocation[1];
@@ -107,50 +146,59 @@ function locationCluster(cluster,sentiments) {
 	var avg = [sum[0]/hasloc, sum[1]/hasloc];
 	return avg;
 }
+*/
 // returns mean number of retweets of the cluster
-function popularityCluster(cluster,sentiments) {
+function popularityCluster(cluster) {
 	var retweetcount= 0;
 	for (i = 0; i< cluster.length; i++) {
-		if (cluster[i].hasRetweetCount) {
-			retweetcount = retweetcount + cluster[i].getRetweetCount;
+		if (cluster.tweets[i].hasRetweetCount()) {
+			retweetcount = retweetcount + cluster.tweets[i].getRetweetCount();
 		}
 	}
 	var avg = retweetcount/(cluster.length);
-	return avg;
+	console.log(avg);
 }
 // adds methods to each cluster using methods above 
-function toClusterObject(cluster,sentiments) {
+function toClusterObject(cluster) {
 	cluster.getEntities = function() {
-		return entitiesCluster(cluster,sentiments);
+		entitiesCluster(cluster);
 	}
 
 	cluster.getRelevantTweets = function() {
-		return relevantTweetsCluster(cluster,sentiments);
+		relevantTweetsCluster(cluster);
 	}
 
 	cluster.getSentiment = function() {
-		return sentimentsCluster(cluster,sentiments);
+		sentimentCluster(cluster);
 	}
 
 	cluster.getPopularity = function() {
-		return popularityCluster(cluster,sentiments);
+		popularityCluster(cluster);
 	}
 
-	cluster.getLocation = function() {
-		return locationCluster(cluster,sentiments);
-	}
+	//cluster.getLocation = function() {
+		//return locationCluster(cluster);
+	//}
 
 	return cluster;
 
 
 }
 // takes an array of clusters and converts each cluster into a clusterObject
-function mainfn(clusters,sentiments) {
+function clusterAnalysis(clusters) {
 	var clusterObjects = [];
 	for (i = 0 ; i < clusters.length; i++) {
-		clusterObjects.push(toClusterObject(clusters[i],sentiments));
+    var co = new toClusterObject(clusters[i]);
+    co.getEntities;
+    co.getRelevantTweets;
+    co.getSentiment;
+    co.getPopularity;
+
+		clusterObjects.push(co);
 
 	}
-	return clusterObjects;
+	//return clusterObjects;
 }
+
+
 
