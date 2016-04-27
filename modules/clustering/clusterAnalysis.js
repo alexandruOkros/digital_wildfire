@@ -91,77 +91,86 @@ function modeCalc(a, number) {
 
 //the get info method calls alchemy api. currently gives entities, 
 //relevant tweets and overall sentiment
-function toClusterObject(cluster) {
-
+function toClusterObject(cluster, callback) {
 
 	cluster.getInfo = function() {
 		 
-    function callbackRelevant(entities, error) {
+	    function callbackRelevant(entities, error) {
 
-      var concatEntities = [];
-      for (i = 0; i < entities.length; i++) {
-        for ( j = 0; j < entities[i].length; j++){
-          var ent = entities[i][j].text;
-          concatEntities.push(ent);
-        }
-      }
-      //popular is the list of 3 most popular entities
-      popular = modeCalc(concatEntities,3);
-        
-      console.log(popular);
-      //rel is all the tweets which contain all the entities from popular
-      var rel = [];
-      for (i = 0; i < entities.length; i++) {
-        var allEnt = [];
-        for ( j = 0; j < entities[i].length; j++){
-          var ent = entities[i][j].text;
-          allEnt.push(ent);
-        }
-        if((allEnt.indexOf(popular[0]) != -1) && (allEnt.indexOf(popular[1]) != -1) && (allEnt.indexOf(popular[2]) != -1)) {
-          console.log(cluster.tweets[i].text);
-          rel.push(cluster.tweets[i]);
-        }
-      }
-      var sent = 0;
-      function callbackSenti(sentiment,error){
-        for (i = 0; i< sentiment.length; i++) {
-          if (sentiment[i].score != undefined) {
-            sent = sent + sentiment[i].score;
-          }
-        }
-        //avg is the avg sentiment of all the tweets
-        var avg = sent/(sentiment.length);
-        console.log(avg);
-      }
+	      var concatEntities = [];
+	      for (i = 0; i < entities.length; i++) {
+	        for ( j = 0; j < entities[i].length; j++){
+	          var ent = entities[i][j].text;
+	          concatEntities.push(ent);
+	        }
+	      }
+	      //popular is the list of 3 most popular entities
+	      popular = modeCalc(concatEntities,3);
+	        
+	      console.log(popular);
+	      // Make this result visible.
+	      cluster.popular_entities = popular;
 
-      Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
-    }
+	      //rel is all the tweets which contain all the entities from popular
+	      var rel = [];
+	      for (i = 0; i < entities.length; i++) {
+	        var allEnt = [];
+	        for ( j = 0; j < entities[i].length; j++){
+	          var ent = entities[i][j].text;
+	          allEnt.push(ent);
+	        }
+	        if((allEnt.indexOf(popular[0]) != -1) && (allEnt.indexOf(popular[1]) != -1) && (allEnt.indexOf(popular[2]) != -1)) {
+	          console.log(cluster.tweets[i].text);
+	          rel.push(cluster.tweets[i]);
+	        }
+	      }
+	      var sent = 0;
+	      function callbackSenti(sentiment, error){
+	        for (i = 0; i < sentiment.length; i++) {
+	          if (sentiment[i] !== null && sentiment[i].hasOwnProperty('score')) {
+	            sent = sent + sentiment[i].score;
+	          }
+	        }
+	        //avg is the avg sentiment of all the tweets
+	        var avg = sent/(sentiment.length);
+	        console.log(avg);
+	        // Make result visible.
+	        cluster.average_sentiment = avg;
+
+	        // I'm done with this cluster. Signal. Think of conccurrent 
+	        // programming synchronisation.
+	        callback();
+	      }
+
+	      Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
+	    }
 
 
     Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackRelevant);
 
   }
-	
 
-  //Show(clusterObject); ??
-	return cluster; 
-
-
-
+  return cluster;
 }
 // takes an array of clusters and converts each cluster into a clusterObject
 function clusterAnalysis(clusters) {
 	var clusterObjects = [];
-  console.log("CLUSTERANALYSIS");
+  	console.log("CLUSTERANALYSIS");
+
+  	// Return result when all clusters have been computed.
+  	var count = clusters.length;
+  	var callback = function() {
+  		count -= 1;
+  		if(count === 0)  // We are finished.
+  			showAnalysis(clusterObjects);
+  	}
+	
 	for (i = 0 ; i < clusters.length; i++) {
-    console.log(i);
-    var co = new toClusterObject(clusters[i]);
+	    // console.log(i);
+	    var co = new toClusterObject(clusters[i], callback);
 
-    co.getInfo();
+	    co.getInfo();
 		clusterObjects.push(co); 
-
-
-
 	}
 	//Show(clusterObjects); ??
 }

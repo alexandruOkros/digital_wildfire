@@ -150,14 +150,13 @@
 			$("#clusters_data").html("Clustering ... <br> Module not here yet.");
 
 			//doTestAlchemy();
-			// mainClustering(Local.tweets_from_search);
+			mainClustering(Local.tweets_from_search);
 		};
 
 		function doAnalysis() {
 			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
 
-			Local.analyzed_data = clusterAnalysis(Local.clusters);
-			console.log(Local.analyzed_data);
+			clusterAnalysis(Local.clusters);
 		};
 
 		function doTestAlchemy() {
@@ -237,8 +236,21 @@
 			$("#clusters_data").html("<h3>Clusters: " + count + "</h3>" + message);
 		}
 
+		var showAnalysis = function(clusters) {
+			var message = "";
 
+			for(var i = 0; i < clusters.length; i++) {
+				message += "<h4>Cluster #" + (i+1) + " has sentiment: " + clusters[i].average_sentiment + " </h4>";
+				message += "Popular entities: <ul class ='list-group'>";
 
+				for(var j = 0; j < clusters[i].popular_entities.length; j++)
+					message += "<li class = 'list-group-item'>" + clusters[i].popular_entities[j] + "</li>";
+
+				message += "</ul>";
+			}
+
+			$("#analysis_data").html(message);
+		}
 
 		</script>
 

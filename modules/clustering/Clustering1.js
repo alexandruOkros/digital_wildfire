@@ -142,48 +142,62 @@ function hardClustering(chosen, clusterNum) {
     console.log("check2");
     // the main clustering operation is performed here
     var rounds = 0;
-    while (clusterCount > clusterNum) {
+    // console.log("starting hardClustering loop");
+    while (clusterCount > clusterNum && rounds < 1000) {
         rounds = rounds + 1;
+        // console.log("round: " + rounds);
         if (v.x === v.y) { // console.log("check2.1"); // if it's a difference bwteen the same element ignore it
-        } else if ((clusterLocations[v.x] === -1) && (clusterLocations[v.y] === -1)) { // console.log("check2.2"); // if neither tweet is in a cluster then make a new cluster with just those 2 tweets in
+        } else if ((clusterLocations[v.x] === -1) && (clusterLocations[v.y] === -1)) { // console.log("check2.2"); // if neither tweet is in a cluster then make a new cluster with just those 2 tweets in 
+            // console.log("case 1");
             place = clusterPlace.pop();
             clusterLocations[v.x] = place;
             clusterLocations[v.y] = place;
             clusters[place] = [v.x, v.y];
             clusterCount -= 1;
+            // console.log("case 1 end");
         } else if (clusterLocations[v.x] === -1) { // console.log("check2.3"); // if one of the tweets is in a cluster add the other to it
+            // console.log("case 2");
             clusterLocations[v.x] = clusterLocations[v.y];
             clusters[clusterLocations[v.y]].push(v.x);
             clusterCount -= 1;
+            // console.log("case 2 end");
         } else if (clusterLocations[v.y] === -1) { // console.log("check2.4");// as above
+            // console.log("case 3");
             clusterLocations[v.y] = clusterLocations[v.x];
             clusters[clusterLocations[v.x]].push(v.y);
             clusterCount -= 1;
+            // console.log("case 3 end");
         } else if (clusterLocations[v.y] === clusterLocations[v.x]) { // console.log("check2.5"); // if the 2 points are already in the same cluster (might never happen) do nothing
         } else { // console.log("check2.6");// find the cluster with the small size (for efficiency) then add that cluster to the other one
-            var tweetId = 0;
+            // console.log("case 4");
+
             if (clusters[clusterLocations[v.y]].length > clusters[clusterLocations[v.x]].length) { // console.log("check2.7");
-                for (i = 0; i < clusters[clusterLocations[v.x]].length; i++) {
-                    tweetId = clusters[clusterLocations[v.x]][i];
-                    clusters[clusterLocations[v.y]].push(tweetId);
-                    clusterLocations[tweetId] = clusterLocations[v.y];
-                }
-                clusterPlace.push(clusterLocations[v.x]);
-                clusters[clusterLocations[v.x]] = []; // clears the array so we know there's no cluster there
+                var sourceCluster = clusterLocations[v.x];
+                var destCluster = clusterLocations[v.y];
             } else { // console.log("check2.8");
-                for (i = 0; i < clusters[clusterLocations[v.y]].length; i++) {
-                    tweetId = clusters[clusterLocations[v.y]][i];
-                    clusters[clusterLocations[v.x]].push(tweetId);
-                    clusterLocations[v.y] = clusterLocations[v.x];
-                }
-                clusterPlace.push(clusterLocations[v.y]);
-                clusters[clusterLocations[v.y]] = []; // clears the array so we know there's no cluster there
+                var sourceCluster = clusterLocations[v.y];
+                var destCluster = clusterLocations[v.x];
             }
+
+            for (i = 0; i < clusters[sourceCluster].length; i++) {
+                tweetId = clusters[sourceCluster][i];
+                clusters[destCluster].push(tweetId);
+                clusterLocations[tweetId] = destCluster;
+            }
+
+            clusterPlace.push(sourceCluster);
+            clusters[sourceCluster] = []; // clears the array so we know there's no cluster there
             clusterCount -= 1;
+            // console.log("case 4 end");
         }
+        // console.log("fetching v");
         v = maxOrder.dequeue();
-        
+        // console.log(v.value);
+        // console.log("fetched v");
     }
+    
+    // console.log("end of hardClustering main loop");
+
     if(clusters.length < clusterNum) {
         for(i = 0; i < chosen.tweets.length; i++){
             if(clusterLocations[i] === -1) {
