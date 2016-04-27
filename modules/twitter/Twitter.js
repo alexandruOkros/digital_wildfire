@@ -48,20 +48,22 @@ Twitter = new function() {
 	//   max_id = 54321;
 	// }
 	//
-	this.searchTweets = function(query, callback) {
-		if(query.hasOwnProperty('feeling')) {
+	this.searchTweets = function(input, callback) {
+		if(input.params.hasOwnProperty('feeling')) {
 			// Add feeling to the search query.
-			switch(query.feeling) {
-				case "positive": query.q += " :)"; break; 
-				case "negative": query.q += " :("; break; 
-				case "question": query.q += " ?"; break; 
+			switch(input.params.feeling) {
+				case "positive": input.query.q += " :)"; break; 
+				case "negative": input.query.q += " :("; break; 
+				case "question": input.query.q += " ?"; break; 
 			}
-			delete query.feeling;
 		}
+
+		// Remove retweets.
+		input.query.q += " -RT";
 
 		// Make a request.
 		var connection_id = Socket.getNewConnectionId();
-		Socket.emit('search_req', { data: query, connection_id: connection_id });
+		Socket.emit('search_req', { data: input, connection_id: connection_id });
 
 		// Wait for the response.
 		Socket.on('search_res' + connection_id, function(data) {
@@ -133,15 +135,15 @@ Twitter = new function() {
 	//
 	// searchArchieve(which: Intquery: Object, callback: function(error: Unknown, 
 	//		tweets: Array[Tweet], response: Unknown)): Array[LimitedTweet]
-	this.searchArchive = function(query, callback) {
+	this.searchArchive = function(input, callback) {
 		// Make a request.
 		var connection_id = Socket.getNewConnectionId();
-		Socket.emit('archive_req', { data: query, connection_id: connection_id });
+		Socket.emit('archive_req', { data: input.query, connection_id: connection_id });
 
 		// Wait for the response.
 		Socket.on('archive_res' + connection_id, function(data) {
 			var tweets = new Array();
-			var text = query.q.toLowerCase();  // What to search for.
+			var text = input.query.q.toLowerCase();  // What to search for.
 			var limit = 1000;  // Stop at this limit
 
 			for(var i = 0; i < data.data.length && tweets.length < limit; ++i) {

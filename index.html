@@ -66,6 +66,12 @@
 					</span>
 				</div>
 
+				<label for = "no_results_select">Number of results</label>
+				<select id = 'no_results_select' class = "form-control">
+					<option value = '0' selected = 'selected'>100</option>
+					<option value = '1'>1000</option>
+				</select>
+
 				<label for = "location_select">Location</label>
 				<select id = 'location_select' class = 'form-control'>
 					<option value = '0'>London</option>
@@ -101,6 +107,7 @@
 						<div id="section_tweets" class="container-fluid">
 							<h1>Tweets</h1>
 							<div id = 'tweets_data'></div>
+							<div id = 'tweets_data2'></div>
 						</div>
 						<div id="section_clusters" class="container-fluid">
 							<h1>Clusters</h1>
@@ -133,8 +140,9 @@
 		});
 
 		$("#search_bar").on("keyup", function(event) {
-			if(event.which == 13)
+			if(event.which == 13) {
 				searchString(grabSearchQuery());
+			}
 		});
 
 
@@ -142,7 +150,7 @@
 			$("#clusters_data").html("Clustering ... <br> Module not here yet.");
 
 			//doTestAlchemy();
-			mainClustering(Local.tweets_from_search);
+			// mainClustering(Local.tweets_from_search);
 		};
 
 		function doAnalysis() {
