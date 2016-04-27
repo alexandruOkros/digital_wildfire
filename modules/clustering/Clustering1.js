@@ -22,11 +22,13 @@ function vectorise(tweet, words) {
 
 // difference takes 2 tweet's vectors, which have been vectorised, and calculates the dot product difference between them
 function similarity(tweet1Vector, tweet2Vector) {
-    var total = 0.0, i = 0;
+    var total = 0.0, i = 0, v1tot = 0, v2tot = 0;
     for (i = 0; i < tweet1Vector.length; i++) {
         total += Math.sqrt(tweet1Vector[i] * tweet2Vector[i]);
+        v1tot += tweet1Vector[i];
+        v2tot += tweet2Vector[i];
     }
-    return total;
+    return (total/(Math.sqrt(v1tot) * Math.sqrt(v2tot)));
 }
 
 // tweetChooser takes all the tweets and sentiment data, and picks out the 15 best words to find tweets from using the most common word occurences, and then chooses N tweets from the data to try and represent the whole sample as best as possible including the sentiment of the tweets on the terms. so it returns: object with 2 parameters, words: array size 15 of string with all the words chosen to cover (all lowercase), and tweets: Array size N of tweets chosen
@@ -65,7 +67,7 @@ function tweetChooser(tweets, tweetNum, clusterNum) {
                     filtered_clusters.push(clusters[i]);
 
             return filtered_clusters;
-        };
+        }
         
         Local.clusters = filterClusters(result3);
         console.log(Local.clusters);
@@ -180,10 +182,8 @@ function hardClustering(chosen, clusterNum) {
             clusterCount -= 1;
         }
         v = maxOrder.dequeue();
-        console.log(clusterCount);
+        
     }
-
-    console.log("check3");
     if(clusters.length < clusterNum) {
         for(i = 0; i < chosen.tweets.length; i++){
             if(clusterLocations[i] === -1) {
@@ -193,16 +193,17 @@ function hardClustering(chosen, clusterNum) {
             }
         }
     }
+    console.log(clusters);
     // :: array of numbner => cluster object
     function Clustered(xs) {
-        var clTweets = [], total = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], j = 0;
+        var clTweets = [], total = new Array(chosen.words.length).fill(0), j = 0;
         for (j = 0; j < xs.length; j++) {
             clTweets.push(chosen.tweets[xs[j]]);
-            for (i = 0; i < 15; i++) {
+            for (i = 0; i < chosen.words.length; i++) {
                 total[i] += chosen.tweets[xs[j]].vector[i];
             }
         }
-        for (i = 0; i < 15; i++) {
+        for (i = 0; i < chosen.words.length; i++) {
             total[i] = total[i] / (clTweets.length);
         }
         this.tweets = []; // this is empty instead of having the tweets in as those tweets are still in teh central array of all tweets to be clustered, 
@@ -220,6 +221,7 @@ function hardClustering(chosen, clusterNum) {
             toPlace +=1;
         }
     }
+    
     return finalClusters;
 }
 
@@ -244,7 +246,7 @@ function easyClustering(tweetClusters, tweets) {
 function mainClustering(tweets) {
     // returns a good proportion of tweets to take for hard clustreing: approx 200 of 1000, or 600 of 10000.
     // var N = 6 * Math.ceil(Math.sqrt(tweets.length)), k = 15;
-    var N = 4 * Math.ceil(Math.sqrt(tweets.length));
+    var N = 2.1 * Math.ceil(Math.sqrt(tweets.length));
     k = 15;
     tweetChooser(tweets, N, k);
 }
