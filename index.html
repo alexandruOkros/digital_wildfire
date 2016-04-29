@@ -1,10 +1,19 @@
+<!DOCTYPE html>
 <html>
 
 	<head>
+		
+		
+		<title>Group 9 - Digital Wildfire</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+		
 		<!--  External.  -->
-		<link rel="stylesheet" href="bootstrap/bootstrap.css">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-		<script src="bootstrap/bootstrap.js"></script>
+
+		<link rel="stylesheet" href="css/mybs.css">
+		<link rel="stylesheet" href="css/bootstrap.css" />
+		<script type="text/javascript" src="js/jquery.min.js" ></script>
+		<script type="text/javascript" src="js/bootstrap.js" ></script>
+		
     	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 
 		<!--  Local.  -->
@@ -47,195 +56,302 @@
 
 
 	<body>
-
-	<div class = 'container'>
-
-		<div class = "row">
-			<div class = "col-sm-9">
-
-				<h5> Note: Selecting a location will significantly reduce the number of results.</h5>
-
-				<div class="input-group">
-					<input id = 'search_bar' type = 'text' placeholder = 'search' 
-						class = 'form-control' aria-describedby = "search_button">
-					</input>
-					<span class="input-group-btn">
-						<button id = 'search_button' class="btn btn-default" type="button">
-							<span class="glyphicon glyphicon-search"></span> Search
-						</button>
-					</span>
+		<nav class = "navbar navbar-default navbar-fixed-top" role = "navigation">
+			<div class="container-fluid">
+				<div class = "navbar-header">
+					<button class ="navbar-toggle" data-toggle="collapse" data-target = ".navbar-collapse">
+						<span class = "icon-bar"></span>
+						<span class = "icon-bar"></span>
+						<span class = "icon-bar"></span>
+					</button>
+					<a href="#" class ="navbar-brand">
+						<img src="img/logo_ox.jpg" style="height: 50px; margin-top: -15px;"/>
+					</a>
 				</div>
-
-				<label for = "location_select">Location</label>
-				<select id = 'location_select' class = 'form-control'>
-					<option value = '0'>London</option>
-					<option value = '1' selected = 'selected'>Any</option>
-				</select>
-
-				<label for = "language_select">Language</label>
-				<select id = 'language_select' class = "form-control">
-					<option value = '0' selected = 'selected'>English</option>
-					<option value = '1'>Any</option>
-				</select>
-
-				<h3>Advanced search</h3>
-
-				<label for = "imported_data_select">Use test data from 23 Feb 2016</label>
-				<select id = 'imported_data_select' class = "form-control">
-					<option value = '0' selected = 'selected'>No</option>
-					<option value = '1'>12.50 - 13.10</option>
-					<option value = '2'>13.20 - 13.40</option>
-					<option value = '3'>14.10 - 14.30</option>
-					<option value = '4'>14.40 - 15.10</option>
-				</select>
-
-				<div class="panel">
-					<div class="panel-body">
-
-						<ul id = 'navbar' class="nav nav-pills">
-							<li><a href="#section_tweets">Tweets</a></li>
-							<li><a href="#section_clusters">Clusters</a></li>
-							<li><a href="#section_analysis">Analysis</a></li>
+				<div class = "collapse navbar-collapse">
+					<div class = "nav navbar-nav">
+						<ul class = "nav navbar-nav">
+							<li class="active"><a href="#">Button1</a></li>
+							<li><a href="#">Button2</a></li>
+							<li class="dropdown">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class = "caret"></span> DropDown</a>
+								<ul class="bs-menu dropdown-menu">
+									<li class="dropdown-submenu">
+										<a href = "#">DropDown1</a>
+										<ul class ="bs-submenu dropdown-menu">
+											<li><a href="#">DropDown1_1</a></li>
+											<li><a href="#">DropDown1_2</a></li>
+										</ul>
+									</li>
+									<li class="divider"></li>
+									<li><a href="#">DropDown2</a></li>
+								</ul>
+							</li>
+							
 						</ul>
-
-						<div id="section_tweets" class="container-fluid">
-							<h1>Tweets</h1>
-							<div id = 'tweets_data'></div>
+					</div>
+					<div class = "navbar-form navbar-right">
+						<!--<a href="#" class="navbar-brand">-->
+						<div class = "input-group">
+							<input id = "quick_search_bar" type = "text" 
+								class="form-control" placeholder="Search"
+								aria-describedby = "quick_search_button"/>
+							<span class = "input-group-btn">
+								<a href = "#display_result">
+									<button class="btn btn-primary" id = "quick_search_button"/>
+										<span class = "glyphicon glyphicon-search" ></span> 
+									</button>
+									</a>
+							</span>
+						<!--</a>-->
 						</div>
-						<div id="section_clusters" class="container-fluid">
-							<h1>Clusters</h1>
-							<div id = 'clusters_data'></div>
-						</div>
-						<div id="section_analysis" class="container-fluid">
-							<h1>Analysis</h1>
-							<div id = 'analysis_data'></div>
-						</div>
-
 					</div>
 				</div>
 
 			</div>
-			<div id = 'side_panel' class = "col-sm-3">
-				<h4>Trending in London</h4>
-				<div id = 'trending'>
-					Loading ...
+		</nav>
+
+		<div style="height: 100px;"></div>
+		<div class = 'container'>
+	
+			<div class = "row">
+				<div class = "col-sm-9">
+	
+					<label for = "search_query">Search</label>
+					<div class="input-group">
+						<input id = 'search_bar' type = 'text' placeholder = 'Search' 
+							class = 'form-control' aria-describedby = "search_button">
+						</input>
+						<span class="input-group-btn">
+							<button class="btn btn-primary" id = 'search_button'  type="button">
+								<span class="glyphicon glyphicon-search"></span>
+							</button>
+						</span>
+					</div>
+					
+					<label for = "no_results_select">Number of results</label>
+					<select id = 'no_results_select' class = "form-control">
+						<option value = '0' selected = 'selected'>100</option>
+						<option value = '1'>1000</option>
+					</select>
+	
+					<label for = "location_select">Location</label>
+					<select id = 'location_select' class = 'form-control'>
+						<option value = '0'>London</option>
+						<option value = '1' selected = 'selected'>Any</option>
+					</select>
+					<h6> Note: Selecting a location will significantly reduce the number of results.</h5>
+
+	
+					<label for = "language_select">Language</label>
+					<select id = 'language_select' class = "form-control">
+						<option value = '0' selected = 'selected'>English</option>
+						<option value = '1'>Any</option>
+					</select>
+	
+					<h3>Advanced search</h3>
+	
+					<label for = "imported_data_select">Use test data from 23 Feb 2016</label>
+					<select id = 'imported_data_select' class = "form-control">
+						<option value = '0' selected = 'selected'>No</option>
+						<option value = '1'>12.50 - 13.10</option>
+						<option value = '2'>13.20 - 13.40</option>
+						<option value = '3'>14.10 - 14.30</option>
+						<option value = '4'>14.40 - 15.10</option>
+					</select>
+					<div style = "height: 20px"></div>
+					<ul class = "nav nav-tabs" id = "display_result">
+						<li class = "active">
+							<a href = "#section_tweets" data-toggle = "tab">Tweets</a>
+						</li>
+						<li>
+							<a href = "#section_clusters" data-toggle = "tab">Clusters</a>
+						</li>
+						<li>
+							<a href = "#section_analysis" data-toggle = "tab">Analysis</a>
+						</li>
+					</ul>
+					<div class = "tab-content">
+						<div class = "tab-pane fade in active" id = "section_tweets">
+							<div id = "tweets_data"></div>
+						</div>
+						<div class = "tab-pane fade" id = "section_clusters">
+							<div id = "tweets_clusters"></div>
+						</div>
+						<div class = "tab-pane fade" id = "section_analysis">
+							<div id = "tweets_analysis"></div>
+						</div>
+					</div>
+	
+	
+	
+	
+	
+					<!--<div class="panel">
+						<div class="panel-body">
+	
+							<ul id = 'navbar' class="nav nav-pills">
+								<li><a href="#section_tweets">Tweets</a></li>
+								<li><a href="#section_clusters">Clusters</a></li>
+								<li><a href="#section_analysis">Analysis</a></li>
+							</ul>
+	
+							<div id="section_tweets" class="container-fluid">
+								<h1>Tweets</h1>
+								<div id = 'tweets_data'></div>
+							</div>
+							<div id="section_clusters" class="container-fluid">
+								<h1>Clusters</h1>
+								<div id = 'clusters_data'></div>
+							</div>
+							<div id="section_analysis" class="container-fluid">
+								<h1>Analysis</h1>
+								<div id = 'analysis_data'></div>
+							</div>
+	
+						</div>
+					</div>-->
+	
+				</div>
+				<div id = 'side_panel' class = "col-sm-3">
+					<div class = "panel panel-primary">
+						<div class = "panel-heading">
+							Trending in London
+						</div>
+						<div class = "panel-body" id = "trending">
+							Loading ...
+						</div>
+					</div>
+					<!--<h4>Trending in London</h4>
+					<div id = 'trending'>
+						Loading ...
+					</div>-->
 				</div>
 			</div>
+	
+			<script>
+			//
+			// Events.
+			//
+	
+			$("#quick_search_button").on("click", function(event) {
+				searchString(grabSearchQuery());
+			});
+	
+//			$("#quick_search_bar").on("keyup", function(event) {
+//				if(event.which == 13)
+//					searchString(grabSearchQuery());
+//			});
+	
+			$("#search_button").on("click", function(event) {
+				searchString(grabSearchQuery());
+			});
+	
+			$("#search_bar").on("keyup", function(event) {
+				if(event.which == 13)
+					searchString(grabSearchQuery());
+			});
+	
+	
+			function doClustering() {
+				$("#clusters_data").html("Clustering ... <br> Module not here yet.");
+	
+				//doTestAlchemy();
+				mainClustering(Local.tweets_from_search);
+			};
+	
+			function doAnalysis() {
+				$("#analysis_data").html("Analysing ... <br> Module not here yet.");
+	
+				Local.analyzed_data = clusterAnalysis(Local.clusters);
+				console.log(Local.analyzed_data);
+			};
+	
+			function doTestAlchemy() {
+				$("#analysis_data").html("Analysing ... <br> Module not here yet.");
+	
+				var callback = function(data, error) {
+	
+					var message = "<ul class ='list-group'>";
+	
+					for(var i = 0; i < data.length; i++)
+						message += "<li class = 'list-group-item'>" + data[i].text + "<b>("+data[i].relevance+") ("+data[i].count+")</b></li>";
+	
+					message += "</ul>";
+	
+					// console.log(error);
+					// console.log(data);
+	
+					$("#analysis_data").html(message)
+				}
+	
+				Alchemy.getKeywords(Local.query.q, Local.tweets_from_search, callback);
+			}
+	
+			function doSentiment() {
+				$("#analysis_data").html("Analysing ... <br> Module not here yet.");
+	
+				var callback = function(data, error) {
+					console.log(data);
+	
+					var message = "";
+					for(var i = 0; i < data.length; ++i)
+						if(data[i] !== null) {
+						message += Local.tweets_from_search[i].getText() + "<br>" +
+							data[i].type + " with score: " + data[i].score + "<br><br>";
+					}
+					$("#analysis_data").html(message);
+				};
+	
+				Alchemy.sentimentTargetedArray(Local.tweets_from_search, "cat", callback);
+			};
+	
+	
+			var showClusters = function(clusters) {
+				var count = 0;
+				var message = "";
+				var br = "<br>";
+	
+				if(clusters.length > 0) {
+	
+					message += "<h4>Entities used for clustering (with relevance for the tweets): </h4>" + br;
+					message += "<ul class ='list-group'>";
+	
+					for(var i = 0; i < clusters[0].words.length; i++)
+						message += "<li class = 'list-group-item'>" + clusters[0].words[i].text + " <b>(" + clusters[0].words[i].relevance +  ")</b></li>";
+	
+					message += "</ul>";
+					message += br + br;
+	
+					for(var i = 0; i < clusters.length; ++i)
+						if(clusters[i].tweets.length !== 0) {
+							count = count + 1;
+	
+							message += "<h4>Cluster #" + count + " has " + clusters[i].tweets.length + " tweets.</h4>";
+							message += "<a href='#demo"+i+"' data-toggle='collapse'>show</a>";
+							message += "<div id ='demo"+i+"' class = 'collapse'>";
+							message += "<ul class ='list-group'>";
+	
+							for(var j = 0; j < clusters[i].tweets.length; j++)
+								message += "<li class = 'list-group-item'>" + clusters[i].tweets[j].getText() + "</li>";
+	
+							message += "</ul>";
+							message += "</div>";
+						}
+				} else
+					message = "No clusters for data.";
+	
+				$("#clusters_data").html("<h3>Clusters: " + count + "</h3>" + message);
+			}
+	
+	
+	
+	
+			</script>
+	
 		</div>
 
-		<script>
-		//
-		// Events.
-		//
-
-		$("#search_button").on("click", function(event) {
-			searchString(grabSearchQuery());
-		});
-
-		$("#search_bar").on("keyup", function(event) {
-			if(event.which == 13)
-				searchString(grabSearchQuery());
-		});
-
-
-		function doClustering() {
-			$("#clusters_data").html("Clustering ... <br> Module not here yet.");
-
-			//doTestAlchemy();
-			mainClustering(Local.tweets_from_search);
-		};
-
-		function doAnalysis() {
-			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
-
-			Local.analyzed_data = clusterAnalysis(Local.clusters);
-			console.log(Local.analyzed_data);
-		};
-
-		function doTestAlchemy() {
-			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
-
-			var callback = function(data, error) {
-
-				var message = "<ul class ='list-group'>";
-
-				for(var i = 0; i < data.length; i++)
-					message += "<li class = 'list-group-item'>" + data[i].text + "<b>("+data[i].relevance+") ("+data[i].count+")</b></li>";
-
-				message += "</ul>";
-
-				// console.log(error);
-				// console.log(data);
-
-				$("#analysis_data").html(message)
-			}
-
-			Alchemy.getKeywords(Local.query.q, Local.tweets_from_search, callback);
-		}
-
-		function doSentiment() {
-			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
-
-			var callback = function(data, error) {
-				console.log(data);
-
-				var message = "";
-				for(var i = 0; i < data.length; ++i)
-					if(data[i] !== null) {
-					message += Local.tweets_from_search[i].getText() + "<br>" +
-						data[i].type + " with score: " + data[i].score + "<br><br>";
-				}
-				$("#analysis_data").html(message);
-			};
-
-			Alchemy.sentimentTargetedArray(Local.tweets_from_search, "cat", callback);
-		};
-
-
-		var showClusters = function(clusters) {
-			var count = 0;
-			var message = "";
-			var br = "<br>";
-
-			if(clusters.length > 0) {
-
-				message += "<h4>Entities used for clustering (with relevance for the tweets): </h4>" + br;
-				message += "<ul class ='list-group'>";
-
-				for(var i = 0; i < clusters[0].words.length; i++)
-					message += "<li class = 'list-group-item'>" + clusters[0].words[i].text + " <b>(" + clusters[0].words[i].relevance +  ")</b></li>";
-
-				message += "</ul>";
-				message += br + br;
-
-				for(var i = 0; i < clusters.length; ++i)
-					if(clusters[i].tweets.length !== 0) {
-						count = count + 1;
-
-						message += "<h4>Cluster #" + count + " has " + clusters[i].tweets.length + " tweets.</h4>";
-						message += "<a href='#demo"+i+"' data-toggle='collapse'>show</a>";
-						message += "<div id ='demo"+i+"' class = 'collapse'>";
-						message += "<ul class ='list-group'>";
-
-						for(var j = 0; j < clusters[i].tweets.length; j++)
-							message += "<li class = 'list-group-item'>" + clusters[i].tweets[j].getText() + "</li>";
-
-						message += "</ul>";
-						message += "</div>";
-					}
-			} else
-				message = "No clusters for data.";
-
-			$("#clusters_data").html("<h3>Clusters: " + count + "</h3>" + message);
-		}
-
-
-
-
-		</script>
-
-	</div>
-
+		<div style="height: 1000px;"></div>
 	</body>
 
 </html>
