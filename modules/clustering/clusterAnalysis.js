@@ -21,7 +21,7 @@ function modeCalc(a, number) {
   for (var i in a) {
     if (!(a[i] in counter)) {
         counter[a[i]] = 0;
-       // console.log(a[i] + " put in counter");
+        console.log(a[i] + " put in counter");
     }
     counter[a[i]]++;
  	}
@@ -29,10 +29,10 @@ function modeCalc(a, number) {
  	for (var i in a) {
  		if (!(a[i] in done)) {
       var k = new clusterCount(a[i],counter[a[i]]);
-      //console.log(" " + k.val);
+      console.log(" " + k.val);
  			maxOrder.queue(k);
  			done[a[i]] = 1;
-      //console.log(a[i] + " done")
+      console.log(a[i] + " done")
  		}
  	}
  	var ans = [];
@@ -52,11 +52,84 @@ function modeCalc(a, number) {
 
 //cluster is an array of tweets
 //clusters is an array of clusters
-
+// to find 3 most common entitities
+// entitiesCluster(array of tweets, sentiment data) : [String]
 
 
   //var popular = []
+function entitiesCluster(cluster) {
+	var concatEntities = [];
 
+
+  function callbackEntities(entities, error) {
+
+    for (i = 0; i < entities.length; i++) {
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        concatEntities.push(ent);
+      }
+    }
+    popular = modeCalc(concatEntities,3);
+    console.log(popular);
+  }
+    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackEntities);
+    //return popular;
+}
+
+//  returns array of tweets that have all three keywords found by entitiesCluster
+function relevantTweetsCluster(cluster) {
+	//var entitiesMain = entitiesCluster(cluster,sentiments);
+ 
+  function callbackRelevant(entities, error) {
+
+    var concatEntities = [];
+    for (i = 0; i < entities.length; i++) {
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        concatEntities.push(ent);
+      }
+    }
+    popular = modeCalc(concatEntities,3);
+      
+    console.log(popular);
+    var rel = [];
+    for (i = 0; i < entities.length; i++) {
+      var allEnt = [];
+      for ( j = 0; j < entities[i].length; j++){
+        var ent = entities[i][j].text;
+        allEnt.push(ent);
+      }
+      if(allEnt.contains(popular[0]) && allEnt.contains(popular[1]) && allEnt.contains(popular[2])) 
+      console.log(cluster.tweets[i].text)
+      rel.push(cluster.tweets[i]);
+    }
+  }
+
+	//for (i = 0 ; i < cluster.length; i++){
+		//var twt = cluster[i]tweets;
+		//Alchemy.entitiesTweet(twt,callbackRelevant)
+    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackRelevant);
+    //if (ent.contains(entitiesMain[0]) && ent.contains(entitiesMain[1]) && ent.contains(entitiesMain[2])) {
+		//rel.push(cluster[i]);
+		//}
+	}
+
+	
+
+
+}
+// returns average sentiment of the cluster calculated as the mean
+function sentimentCluster(cluster) {
+	var sent = 0;
+	function callbackSenti(sentiment,error){
+    for (i = 0; i< sentiment.length; i++) {
+		  sent = sent + sentiment[i].score;
+	  }
+	  var avg = sent/(sentiment.length);
+    console.log(avg);
+  }
+  Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
+}
 // TODO: find a better way to calculate location?
 // returns mean location of the cluster
 /* function locationCluster(cluster) {
@@ -74,7 +147,7 @@ function modeCalc(a, number) {
 }
 */
 // returns mean number of retweets of the cluster
-/*function popularityCluster(cluster) {
+function popularityCluster(cluster) {
 	var retweetcount= 0;
 	for (i = 0; i< cluster.length; i++) {
 		if (cluster.tweets[i].hasRetweetCount()) {
@@ -82,96 +155,47 @@ function modeCalc(a, number) {
 		}
 	}
 	var avg = retweetcount/(cluster.length);
-	console.log("POPU " + avg);
+	console.log(avg);
 }
-// adds methods to each cluster using methods above */
+// adds methods to each cluster using methods above 
+function toClusterObject(cluster) {
+	cluster.getEntities = function() {
+		entitiesCluster(cluster);
+	}
+
+	cluster.getRelevantTweets = function() {
+		relevantTweetsCluster(cluster);
+	}
+
+	cluster.getSentiment = function() {
+		sentimentCluster(cluster);
+	}
+
+	cluster.getPopularity = function() {
+		popularityCluster(cluster);
+	}
+
+	//cluster.getLocation = function() {
+		//return locationCluster(cluster);
+	//}
+
+	return cluster;
 
 
-
-
-//the get info method calls alchemy api. currently gives entities, 
-//relevant tweets and overall sentiment
-function toClusterObject(cluster, callback) {
-
-	cluster.getInfo = function() {
-		 
-	    function callbackRelevant(entities, error) {
-
-	      var concatEntities = [];
-	      for (i = 0; i < entities.length; i++) {
-	        for ( j = 0; j < entities[i].length; j++){
-	          var ent = entities[i][j].text;
-	          concatEntities.push(ent);
-	        }
-	      }
-	      //popular is the list of 3 most popular entities
-	      popular = modeCalc(concatEntities,3);
-	        
-	      console.log(popular);
-	      // Make this result visible.
-	      cluster.popular_entities = popular;
-
-	      //rel is all the tweets which contain all the entities from popular
-	      var rel = [];
-	      for (i = 0; i < entities.length; i++) {
-	        var allEnt = [];
-	        for ( j = 0; j < entities[i].length; j++){
-	          var ent = entities[i][j].text;
-	          allEnt.push(ent);
-	        }
-	        if((allEnt.indexOf(popular[0]) != -1) && (allEnt.indexOf(popular[1]) != -1) && (allEnt.indexOf(popular[2]) != -1)) {
-	          console.log(cluster.tweets[i].text);
-	          rel.push(cluster.tweets[i]);
-	        }
-	      }
-	      var sent = 0;
-	      function callbackSenti(sentiment, error){
-	        for (i = 0; i < sentiment.length; i++) {
-	          if (sentiment[i] !== null && sentiment[i].hasOwnProperty('score')) {
-	            sent = sent + sentiment[i].score;
-	          }
-	        }
-	        //avg is the avg sentiment of all the tweets
-	        var avg = sent/(sentiment.length);
-	        console.log(avg);
-	        // Make result visible.
-	        cluster.average_sentiment = avg;
-
-	        // I'm done with this cluster. Signal. Think of conccurrent 
-	        // programming synchronisation.
-	        callback();
-	      }
-
-	      Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
-	    }
-
-
-    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackRelevant);
-
-  }
-
-  return cluster;
 }
 // takes an array of clusters and converts each cluster into a clusterObject
 function clusterAnalysis(clusters) {
 	var clusterObjects = [];
-  	console.log("CLUSTERANALYSIS");
-
-  	// Return result when all clusters have been computed.
-  	var count = clusters.length;
-  	var callback = function() {
-  		count -= 1;
-  		if(count === 0)  // We are finished.
-  			showAnalysis(clusterObjects);
-  	}
-	
 	for (i = 0 ; i < clusters.length; i++) {
-	    // console.log(i);
-	    var co = new toClusterObject(clusters[i], callback);
+    var co = new toClusterObject(clusters[i]);
+    co.getEntities;
+    co.getRelevantTweets;
+    co.getSentiment;
+    co.getPopularity;
 
-	    co.getInfo();
-		clusterObjects.push(co); 
+		clusterObjects.push(co);
+
 	}
-	//Show(clusterObjects); ??
+	//return clusterObjects;
 }
 

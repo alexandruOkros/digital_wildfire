@@ -60,16 +60,14 @@
 
 			var query = {
 				q: "cat",
+				geocode: Twitter.locations.London,
 				lang: Twitter.languages.English,
 				result_type: "recent",
 				count: 100,
 			};
-			var params = {
-				pages: 3
-			};
+			Twitter.searchTweets(query, callback);
 
 
-			Twitter.searchTweets({ query: query, params: params }, callback);
 
 		</script>
 

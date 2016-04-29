@@ -22,15 +22,8 @@ function grabSearchQuery() {
 	// Data from the archive.
 	query.which = parseInt($('#imported_data_select').val()) - 1;
 
-	// Parameters.
-	if($('#no_results_select').val() === "0")
-		params = { pages: 1 };
-	else
-		params = { pages: 10 };
-
-
-	Local.query = { query: query, params: params };  // Save.
-	return Local.query;
+	Local.query = query;  // Save.
+	return query;
 };
 
 // Search for a string and display the results.
@@ -67,7 +60,7 @@ function searchString(query) {
 			doClustering();
 	};
 
-	if(query.query.which === -1)
+	if(query.which === -1)
 		Twitter.searchTweets(query, callback);  // Search live on twitter.
 	else
 		Twitter.searchArchive(query, callback);  // Search the archieve
