@@ -118,15 +118,45 @@ Twitter = new function() {
 			});
 	}
 
+	var getMaxIdFromString = function(string) {
+		var index = string.indexOf("max_id=");
+		if(index !== -1) {
+			index += 7;
+			var index2 = string.indexOf("&", index);
+			var max_id = string.substr(index, index2 - index);
+			return max_id;
+		}
+		return -1;  // Failed.
+	}
+
 	// Search Tweets.
-	this.searchTweets = function(query, callback) {
+	this.searchTweets = function(input, callback) {
 		connect();
+
+		var pages = input.params.pages;
 
 		// Make the API call.
 		client.get('search/tweets',
-			query, 
+			input.query, 
 			function(error, data, response) {
-				callback({error: error, data: data, response: response });
+				if(pages === 1 || data.statuses.length === 0)
+					callback({ error: error, data: data, response: response });
+				else {
+					var max_id = data.statuses[data.statuses.length - 1].id;
+					console.log(max_id);
+
+					var callback2 = function(received) {
+						// Check for duplicates.
+						if(received.data.statuses.length > 0 && received.data.statuses[0].id === max_id)
+							received.data.statuses.shift();
+
+						callback({ error: error, data: { statuses: data.statuses.concat(received.data.statuses) }, response: response })
+					}
+
+					input.params.pages = pages - 1;
+					input.query.max_id = max_id;
+					Twitter.searchTweets(input, callback2);
+				}
 			}
 		);
 	};

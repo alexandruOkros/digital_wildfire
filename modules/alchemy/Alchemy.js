@@ -219,11 +219,11 @@ Alchemy = new function() {
  		var errors = new Array()
 
  		// First split the query.
- 		/*
  		var query_key = query.split(" ");
  		for(var i = 0; i < query_key.length; i++)
- 			keywords.push({ text: query_key[i] , relevance: 1.0 })
-*/
+ 			if(query_key[i] !== "-RT" && query_key[i] !== "")
+ 				keywords.push({ text: query_key[i] , relevance: 1.0 })
+
  		// Get keywords.
  		var callback_keywords = function(keys, error) {
  			errors.push(error);
