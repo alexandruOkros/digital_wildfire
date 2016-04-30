@@ -119,11 +119,6 @@ Twitter = new function() {
 	}
 
 
-	// TODO:
-	// Search Twitter for tweets matching the search query returning more than
-	// 100 tweets.
-
-
 	// Returns data given by our supervisers; the which parameter specifies
 	// which data file to import: (this is query.which)
 	// 0 - "12.50-1.10.csv"
@@ -153,6 +148,26 @@ Twitter = new function() {
 					tweet.hasText() && tweet.getText().toLowerCase().search(text) !== -1)
 					tweets.push(tweet);
 			}
+
+			callback(data.error, tweets, data.response);
+		});
+	}
+
+
+	// Demo data.
+	this.demo = function(input, callback) {
+		// Make a request.
+		var connection_id = Socket.getNewConnectionId();
+		Socket.emit('demo_req', { data: input, connection_id: connection_id });
+
+		// Wait for the response.
+		Socket.on('demo_res' + connection_id, function(data) {
+			console.log('ok2');
+			var tweets = new Array();
+			// Convert the data to Tweet objects.
+			if(data.data.hasOwnProperty('statuses'))
+				for(var i = 0; i < data.data.statuses.length; ++i)
+					tweets[i] = toTweet(data.data.statuses[i]);
 
 			callback(data.error, tweets, data.response);
 		});

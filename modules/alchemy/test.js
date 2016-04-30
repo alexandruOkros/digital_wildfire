@@ -9,16 +9,13 @@ var myText2 = "Hi, my name is Michael. Elena is my daugther. The goat is in the 
 var myText3 = "Mood. #cat #love #morning @ London, United Kingdom https://t.co/6v4KfE50ll";
 
 
-alchemy._doRequest(alchemy._getQuery(myText3, {}, "GetEmotion"),  function(err, response) {
+
+alchemy.apiKeyInfo({}, function(err, response) {
   if (err) throw err;
 
-  // See http://www.alchemyapi.com/api/combined-call/ for format of returned object.
-  // Each feature response will be available as a separate property.
-  console.log(response);
-  var feature_response = response.FEATURE_NAME; 
-
-
   // Do something with data
+  console.log('Status:', response.status, 'Consumed:', response.consumedDailyTransactions, 'Limit:', response.dailyTransactionLimit);
+  
 });
 
 

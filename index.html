@@ -93,6 +93,7 @@
 					<option value = '2'>13.20 - 13.40</option>
 					<option value = '3'>14.10 - 14.30</option>
 					<option value = '4'>14.40 - 15.10</option>
+					<option value = '5'>Google Telegram</option>
 				</select>
 
 				<div class="panel">
@@ -150,13 +151,13 @@
 			$("#clusters_data").html("Clustering ... <br> Module not here yet.");
 
 			//doTestAlchemy();
-			mainClustering(Local.tweets_from_search);
+			// mainClustering(Local.tweets_from_search);
 		};
 
 		function doAnalysis() {
 			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
 
-			clusterAnalysis(Local.clusters);
+			// clusterAnalysis(Local.clusters);
 		};
 
 		function doTestAlchemy() {
@@ -220,7 +221,19 @@
 						count = count + 1;
 
 						message += "<h4>Cluster #" + count + " has " + clusters[i].tweets.length + " tweets.</h4>";
-						message += "<a href='#demo"+i+"' data-toggle='collapse'>show</a>";
+
+						// Keywords.
+						message += "<a href='#demo2"+i+"' data-toggle='collapse'>centroid</a>";
+						message += "<div id ='demo2"+i+"' class = 'collapse'>";
+						message += "<ul class ='list-group'>";
+						for(var j = 0; j < clusters[i].words.length; j++)
+							message += "<li class = 'list-group-item'>" + clusters[i].words[j].text + " <b>(" + clusters[i].centroid[j] +  ")</b></li>";
+						message += "</ul>";
+						message += "</div>";
+
+						message += "<br>";
+						// Tweets.
+						message += "<a href='#demo"+i+"' data-toggle='collapse'>tweets</a>";
 						message += "<div id ='demo"+i+"' class = 'collapse'>";
 						message += "<ul class ='list-group'>";
 

@@ -158,6 +158,15 @@ function toTweet(tweet) {
 	tweet.user = toUser(tweet.user);
 
 
+	//
+	// print
+	//
+	tweet.toString = function() {
+		return "<b>" + tweet.getCreatedAt() + "</b><br>" +
+			"Retweet: " + tweet.getRetweetCount() +
+			"; Favorited: " + tweet.getFavoriteCount() + "<br>" +
+			tweet.getText() + "<br><br><br>"
+	}
 
 
 	// TODO: other fields for a tweet.

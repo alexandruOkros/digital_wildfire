@@ -26,7 +26,7 @@ function grabSearchQuery() {
 	if($('#no_results_select').val() === "0")
 		params = { pages: 1 };
 	else
-		params = { pages: 10 };
+		params = { pages: 1 };
 
 
 	Local.query = { query: query, params: params };  // Save.
@@ -50,11 +50,8 @@ function searchString(query) {
 			message += "<a href='#demoresults' data-toggle='collapse'>show tweets</a>";
 			message += "<div id ='demoresults' class = 'collapse'>";
 				
-			for(var i = 0; i < tweets.length; ++i) {
-				var tweet = tweets[i];
-				message += "<b>" + tweet.getCreatedAt() + "</b><br>" +
-					tweet.getText() + "<br><br><br>";
-			}
+			for(var i = 0; i < tweets.length; ++i)
+				message += tweets[i].toString();
 
 			message += "</div>";
 		} else {
@@ -69,6 +66,8 @@ function searchString(query) {
 
 	if(query.query.which === -1)
 		Twitter.searchTweets(query, callback);  // Search live on twitter.
+	else if(query.query.which === 4)
+		Twitter.demo(query, callback);
 	else
 		Twitter.searchArchive(query, callback);  // Search the archieve
 };
@@ -93,4 +92,4 @@ function fetchTrending() {
 
 	Twitter.getTrends("London", callback);
 };
-// fetchTrending();
+fetchTrending();

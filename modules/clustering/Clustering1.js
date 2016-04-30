@@ -143,7 +143,8 @@ function hardClustering(chosen, clusterNum) {
     // the main clustering operation is performed here
     var rounds = 0;
     // console.log("starting hardClustering loop");
-    while (clusterCount > clusterNum && rounds < 1000) {
+    while (clusterCount > clusterNum) {
+        console.log(v.value);
         rounds = rounds + 1;
         // console.log("round: " + rounds);
         if (v.x === v.y) { // console.log("check2.1"); // if it's a difference bwteen the same element ignore it

@@ -37,6 +37,9 @@ io.on('connection', function(socket) {
 			var connection_id = data.connection_id;
 
 			var callback = function(output) {
+				// if(channel === 'search')
+					// fs.writeFile("./data/tmp", JSON.stringify(output));
+
 				io.emit(channel + "_res" + connection_id, output);
 			}
 
@@ -54,6 +57,8 @@ io.on('connection', function(socket) {
 	clientConnection('trend', Twitter.getTrends);
 	// Archive request.
 	clientConnection('archive', Twitter.searchArchive);
+	// Demo.
+	clientConnection('demo', Twitter.demo);
 
 
 	//
@@ -180,6 +185,15 @@ Twitter = new function() {
 		results = JSON.parse(fs.readFileSync('./data/imported_data_' + data.which, 'utf8'));
 		callback({ error: "", data: results, response: "ok" });
 	}
+
+	// Get demo data.
+	this.demo = function(data, callback) {
+		if(data.query.q === "google telegram") {
+			results = JSON.parse(fs.readFileSync('./data/google_telegram', 'utf8'));
+			callback(results);
+		} else  // Return nothing.
+			callback({ error: "no demo data", data: {}, response: "" });
+	}
 };
 
 // Alchemy interface.
@@ -195,7 +209,9 @@ Alchemy = new function() {
 
 	var classic_text_callback = function(source, callback) {
 		return function(err, response) {
-			if(response.status === "ERROR")
+			if(response === null)
+				callback({ data: {}, error: "No response." });
+			else if(response.status === "ERROR")
 				callback({ data: {}, error: response.statusInfo });
 			else if(err || !response.hasOwnProperty(source))
 				callback({ data: {}, error: "AlchemyAPI library error." });
