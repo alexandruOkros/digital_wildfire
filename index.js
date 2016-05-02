@@ -64,30 +64,15 @@ io.on('connection', function(socket) {
 	//
 	// Alchemy API.
 	//
-	// Sentiment Analysis.
-	clientConnection('alc_sentiment', Alchemy.sentimentText);
-	// Vectorised Sentiment Analysis.
-	clientConnection('alc_sentiment_array', Alchemy.sentimentArray);
-	
-	// Targeted Sentiment Analysis.
-	clientConnection('alc_sentiment_targeted', Alchemy.sentimentTargetedText);
-	// Vectorised Targeted Sentiment Analysis.
-	clientConnection('alc_sentiment_targeted_array', Alchemy.sentimentTargetedArray);
-	
-	// Keywords.
-	clientConnection('alc_keywords', Alchemy.keywordsText);
-	// Vectorise Keywords.
-	clientConnection('alc_keywords_array', Alchemy.keywordsArray);
+	// Text analysis.
+	clientConnection('alchemy_text', Alchemy.textAnalysis);
 
-	// Entities.
-	clientConnection('alc_entities', Alchemy.entitiesText);
-	// Vectorise Entities.
-	clientConnection('alc_entities_array', Alchemy.entitiesArray);
-	
-	// Emotion.
-	clientConnection('alc_emotion', Alchemy.emotionText);
-	// Vectorised Emotion.
-	clientConnection('alc_emotion_array', Alchemy.emotionArray);
+	// Tweet analysis.
+	clientConnection('alchemy_tweet', Alchemy.tweetAnalysis);
+
+	// Tweets (as array).
+	clientConnection('alchemy_tweets', Alchemy.tweetsAnalysis);
+
 });
 
 
@@ -194,7 +179,7 @@ Twitter = new function() {
 		} else  // Return nothing.
 			callback({ error: "no demo data", data: {}, response: "" });
 	}
-};
+}
 
 // Alchemy interface.
 Alchemy = new function() {
@@ -207,6 +192,11 @@ Alchemy = new function() {
 	// Client.
 	var alchemy = new AlchemyAPI(key);
 
+	// Standard responses.
+	var error = function(string) {
+		return { data: {}, error: string }
+	}
+
 	var classic_text_callback = function(source, callback) {
 		return function(err, response) {
 			if(response === null)
@@ -218,18 +208,19 @@ Alchemy = new function() {
 			else
 				callback({ data: response[source], error: err });
 		};
-	};
+	}
 
-	var classic_array_callback = function(texts, onCompletion, delegate) {
+	var classic_array_callback = function(branch, tweets, onCompletion) {
 		var results = new Array();
 		var errors = new Array();
-	    var count = texts.length;
+	    var count = tweets.length;
 
 	    // Add index.
-	    for(var i = 0; i < texts.length; ++i)
-	    	texts[i] = { id: i, text: texts[i] };
+	    for(var i = 0; i < tweets.length; ++i)
+	    	tweets[i] = { id: i, tweet: tweets[i] }
 
-	    async.forEach(texts, function(item, callback1) {
+	    async.forEach(tweets, function(item, callback1) {
+	    	// One item was processed.
 	    	var callback = function(data) {
 	    		count -= 1;
 	    		results[item.id] = data.data;
@@ -237,83 +228,123 @@ Alchemy = new function() {
 
 	    		// Check for termination.
 	    		if(count === 0)
-	    			onCompletion({ data: results, error: errors });
-	    	};
+	    			onCompletion({ data: results, error: errors })
+	    	}
 
-	    	delegate(item.text, callback);
-	    });
-	};
-
-	// Get sentiment analysis on given text.
-	this.sentimentText = function(text, callback) {
-		alchemy.sentiment(text, {}, classic_text_callback('docSentiment', callback));
-	};
-
-	// Get sentiment analysis on given array of texts.
-	this.sentimentArray = function(texts, callback) {
-		classic_array_callback(texts, callback, Alchemy.sentimentText);
-	};
-
-	// Get sentiment analysis on given text.
-	this.sentimentTargetedText = function(data, callback) {
-		alchemy.sentiment_targeted(data.text, data.word, {}, classic_text_callback('docSentiment', callback));
-	};
-
-	// Get sentiment analysis on given array of texts.
-	this.sentimentTargetedArray = function(data, onCompletion) {
-		var sentiments = new Array();
-		var errors = new Array();
-		var texts = data.texts;
-		var word = data.word;
-	    var count = texts.length;
-
-	    // Add index.
-	    for(var i = 0; i < texts.length; ++i)
-	    	texts[i] = { id: i, text: texts[i] };
-
-	    async.forEach(texts, function(item, callback) {
-	    	var callback = function(data) {
-	    		count -= 1;
-	    		sentiments[item.id] = data.data;
-	    		errors[item.id] = data.error;
-
-	    		// Check for termination.
-	    		if(count === 0)
-	    			onCompletion({ data: sentiments, error: errors });
-	    	};
-
-	    	Alchemy.sentimentTargetedText({ text: item.text, word: word }, callback);
-	    });
-	};
-
-	// Get the keywords of the given text.
-	this.keywordsText = function(text, callback) {
-		alchemy.keywords(text, { maxRetrieve: return_limit }, classic_text_callback('keywords', callback));
+	    	Alchemy.tweetAnalysis({ text: item.tweet, branch: branch }, callback)
+	    })
 	}
 
-	// Get keywords on given array of texts.
-	this.keywordsArray = function(texts, callback) {
-		classic_array_callback(texts, callback, Alchemy.keywordsText);
-	};
+	this.textAnalysis = function(data, callback) {
+		// Unpack the data.
+		var text = data.text
+		var branch = data.branch
 
-	// Get the entities of the given text.
-	this.entitiesText = function(text, callback) {
-		alchemy.entities(text, { maxRetrieve: return_limit }, classic_text_callback('entities', callback));
-	};
+		if(branch === 'sentiment')  // Sentiment.
+			alchemy.sentiment(text, {}, 
+				classic_text_callback('docSentiment', callback));
+		else if(branch === 'keywords')  // Keywords.
+			alchemy.keywords(text, { maxRetrieve: return_limit }, 
+				classic_text_callback('keywords', callback));
+		else if(branch === 'entities')  // Entities.
+			alchemy.entities(text, { maxRetrieve: return_limit }, 
+				classic_text_callback('entities', callback));
+		else if(branch === 'targetedSentiment')  // Targeted sentiment.
+			alchemy.sentiment_targeted(text.text, text.word, {}, 
+				classic_text_callback('docSentiment', callback));
+		else if(branch === 'emotion')  // Emotion.
+			alchemy._doRequest(alchemy._getQuery(text, {}, "GetEmotion"), 
+				classic_text_callback('docEmotions', callback));
+		else  // Illegal branch parameter.
+			callback(error("Branch not found."));
+	}
 
-	// Get entities on given array of texts.
-	this.entitiesArray = function(texts, callback) {
-		classic_array_callback(texts, callback, Alchemy.entitiesText);
-	};
+	this.tweetAnalysis = function(data, callback) {
+		// Unpack the data.
+		var tweet = data.text
+		var branch = data.branch
 
+		var cached_data = Cache.get(branch, tweet)
 
-	// Get the emotion data of the given text.
-	this.emotionText = function(text, callback) {
-		alchemy._doRequest(alchemy._getQuery(text, {}, "GetEmotion"), classic_text_callback('docEmotions', callback));
-	};
+		if(cached_data !== null)
+			callback(cached_data)
+		else {
+			var callback2 = function(data) {
+				// Save the data before returning.
+				Cache.store(branch, tweet, data)
+				callback(data)
+			}
 
-	// Get emotion on given array of texts.
-	this.emotionArray = function(texts, callback) {
-		classic_array_callback(texts, callback, Alchemy.emotionText);
-	};
-};
+			// Come back here to save the data.
+			Alchemy.textAnalysis({ text: tweet.text, branch: branch }, callback2)
+		}
+	}
+
+	this.tweetsAnalysis = function(data, callback) {
+		// Unpack the data.
+		var tweets = data.tweets
+		var branch = data.branch
+
+		classic_array_callback(branch, tweets, callback);
+	}
+}
+
+//
+// Cache Alchemy API calls.
+//
+Cache = new function() {
+	var branches = [
+		'sentiment',
+		'keywords',
+		'entities',
+		'targetedSentiment',
+		'emotion'
+	]
+
+	// Stored data.
+	var data = {}
+	var modified = {}
+
+	var update = function() {
+		// Check what to save.
+		for(var i = 0; i < branches.length; i++) {
+			if(modified[branches[i]] === true) {
+				fs.writeFile('./cache/' + branches[i], JSON.stringify(data[branches[i]]));
+				modified[branches[i]] = false
+				console.log("Writen " + branches[i]);
+			}
+		}
+
+		setTimeout(function() { update() }, 5 * 1000)  // Every minute.
+	}
+
+	var initialise = function() {
+		// Read all the data.
+		for(var i = 0; i < branches.length; i++) {
+			data[branches[i]] = JSON.parse(fs.readFileSync(
+				'./cache/' + branches[i], 'utf8'));
+			modified[branches[i]] = false
+		}
+
+		console.log("!!! Read the cache.")
+		// Start the update process.
+		update();
+	}
+
+	this.get = function(branch, tweet) {
+		if(tweet.hasOwnProperty('id') && data[branch].hasOwnProperty(tweet.id))
+			return data[branch][tweet.id]
+
+		return null
+	}
+
+	this.store = function(branch, tweet, value) {
+		if(tweet.hasOwnProperty('id')) {
+			data[branch][tweet.id] = value
+			modified[branch] = true
+		}
+	}
+
+	// Run the system.
+	initialise()
+}

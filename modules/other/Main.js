@@ -8,8 +8,8 @@ function grabSearchQuery() {
 	var query = {
 		q: $('#search_bar').val(),
 		result_type: "recent",
-		count: 100,  // TODO make it 100.
-	};
+		count: 100,  // TODO make it 100(max 100).
+	}
 
 	// Location.
 	if($('#location_select').val() === "0")
@@ -31,38 +31,53 @@ function grabSearchQuery() {
 
 	Local.query = { query: query, params: params };  // Save.
 	return Local.query;
-};
+}
+
+//
+// Flow.
+//
+Flow = new function() {
+
+	this.initialTweets = function(tweets) {
+		// Save local data.
+		Local.tweets_from_search = tweets
+
+		// Print the tweets.
+		showTweets()
+
+
+		if(tweets.length !== 0)
+			Flow.initialClustering(tweets)
+	}
+
+	this.initialClustering = function(tweets) {
+		$("#clusters_data").html("Clustering ... ");
+
+		// Get clusters.
+		var callback = function(data) {
+			showClusters(data.clusters, data.keywords)
+		}
+		var importantKeywords = Local.query.query.q.split(" ").filter(
+			function(word) { return (word.length !== 0) })
+
+		// Compute clusters.
+		Clustering.main(importantKeywords, tweets, callback)
+	}
+}
 
 // Search for a string and display the results.
-function searchString(query) {
+function search() {
 
 	$("#tweets_data").html("Loading ...");
 	$("#clusters_data").html("");
 	$("#analysis_data").html("");
 
+ 	// Get the search parameters.
+	query = grabSearchQuery()
+
 	var callback = function(error, tweets, response) {
-		// Save local data.
-		Local.tweets_from_search = tweets;
-
-		var message = "";
-
-		if(tweets.length !== 0) {
-			message += "<a href='#demoresults' data-toggle='collapse'>show tweets</a>";
-			message += "<div id ='demoresults' class = 'collapse'>";
-				
-			for(var i = 0; i < tweets.length; ++i)
-				message += tweets[i].toString();
-
-			message += "</div>";
-		} else {
-			message = "No results.";
-		}
-
-		$("#tweets_data").html("<h3>Tweets found (max 100): " + tweets.length + "</h3>" + message);
-
-		if(tweets.length !== 0)
-			doClustering();
-	};
+		Flow.initialTweets(tweets)
+	}
 
 	if(query.query.which === -1)
 		Twitter.searchTweets(query, callback);  // Search live on twitter.
@@ -71,6 +86,25 @@ function searchString(query) {
 	else
 		Twitter.searchArchive(query, callback);  // Search the archieve
 };
+
+function showTweets() {
+	var tweets = Local.tweets_from_search
+	var message = "";
+
+	if(tweets.length !== 0) {
+		message += "<a href='#demoresults' data-toggle='collapse'>show tweets</a>";
+		message += "<div id ='demoresults' class = 'collapse'>";
+			
+		for(var i = 0; i < tweets.length; ++i)
+			message += tweets[i].toString();
+
+		message += "</div>";
+	} else {
+		message = "No results.";
+	}
+
+	$("#tweets_data").html("<h3>Tweets found (max 100): " + tweets.length + "</h3>" + message);
+}
 
 // Side panel with trending page.
 function fetchTrending() {

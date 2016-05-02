@@ -1,11 +1,16 @@
 <html>
 
 	<head>
+		<title>Digital Wildfire Tracker</title>
+
 		<!--  External.  -->
 		<link rel="stylesheet" href="bootstrap/bootstrap.css">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 		<script src="bootstrap/bootstrap.js"></script>
     	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css">
+		<script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
 
 		<!--  Local.  -->
 		<!--  Styling.  -->
@@ -30,7 +35,7 @@
 		<script src = 'modules/alchemy/Emotion.js'></script>
 
 		<!--  Clustering.  -->
-		<script src = 'modules/clustering/Clustering1.js'></script>
+		<script src = 'modules/clustering/Clustering.js'></script>
 		<script src = 'modules/clustering/priority-queue.js'></script>
 
 		<!--  Analysis.  -->
@@ -40,13 +45,51 @@
 		<script src = 'modules/other/Local.js'></script>
 		<script src = 'modules/other/Main.js'></script>
 
-		<!--  Data.  -->
-		<script src = 'modules/twitter/data/imported_data.js'></script>
-
 	</head>
 
 
 	<body>
+
+	<div class = 'mdl-layout__container'>
+
+	<div class="demo-layout-transparent mdl-layout mdl-js-layout">
+	  <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 is-casting-shadow">
+	    <div class="mdl-layout__header-row">
+	      <!-- Title -->
+	      <span class="mdl-layout-title">Digital Wildfire Tracker</span>
+	      <!-- Add spacer, to align navigation to the right -->
+	      <div class="mdl-layout-spacer"></div>
+	      <!-- Navigation -->
+	      <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+    <label class="mdl-button mdl-js-button mdl-button--icon" for="search_2">
+      <i class="material-icons">search</i>
+    </label>
+    <div class="mdl-textfield__expandable-holder">
+      <input class="mdl-textfield__input" type="text" id="search_2">
+      <label class="mdl-textfield__label" for="sample-expandable">Expandable Input</label>
+    </div>
+  </div>
+	     <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="hdrbtn">
+            <i class="material-icons">more_vert</i>
+          </button>
+          <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-right" for="hdrbtn">
+            <li class="mdl-menu__item">About</li>
+            <li class="mdl-menu__item">Contact</li>
+            <li class="mdl-menu__item">Legal information</li>
+          </ul>
+	    </div>
+	  </header>
+	  <div class="mdl-layout__drawer">
+	    <span class="mdl-layout-title">Title</span>
+	    <nav class="mdl-navigation">
+	      <a class="mdl-navigation__link" href="">Link</a>
+	      <a class="mdl-navigation__link" href="">Link</a>
+	      <a class="mdl-navigation__link" href="">Link</a>
+	      <a class="mdl-navigation__link" href="">Link</a>
+	    </nav>
+	  </div>
+	  <main class="mdl-layout__content">
+	  
 
 	<div class = 'container'>
 
@@ -132,27 +175,39 @@
 		</div>
 
 		<script>
+
 		//
 		// Events.
 		//
 
 		$("#search_button").on("click", function(event) {
-			searchString(grabSearchQuery());
-		});
+			search();
+		})
 
 		$("#search_bar").on("keyup", function(event) {
 			if(event.which == 13) {
-				searchString(grabSearchQuery());
+				search();
 			}
-		});
+		})
+
+		$("#search_2").on("keyup", function(event) {
+			if(event.which == 13) {
+				search();
+			}
+		})
+
+		
 
 
-		function doClustering() {
-			$("#clusters_data").html("Clustering ... <br> Module not here yet.");
-
-			//doTestAlchemy();
-			// mainClustering(Local.tweets_from_search);
-		};
+		/*
+		// Alchemy testing.
+		var callback = function(data, error) {
+			console.log(data)
+		}
+		var q = grabSearchQuery()
+		Alchemy.text('entities', q.query.q, callback)
+		console.log(q.query.q)
+		*/
 
 		function doAnalysis() {
 			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
@@ -178,7 +233,12 @@
 				$("#analysis_data").html(message)
 			}
 
-			Alchemy.getKeywords(Local.query.q, Local.tweets_from_search, callback);
+			var callback2 = function(data, error) {
+				console.log(data)
+				console.log(error)
+			}
+
+			Alchemy.tweet("sentiment", Local.tweets_from_search[0], callback2);
 		}
 
 		function doSentiment() {
@@ -200,7 +260,7 @@
 		};
 
 
-		var showClusters = function(clusters) {
+		var showClusters = function(clusters, words) {
 			var count = 0;
 			var message = "";
 			var br = "<br>";
@@ -208,11 +268,14 @@
 			if(clusters.length > 0) {
 
 				message += "<h4>Entities used for clustering (with relevance for the tweets): </h4>" + br;
+				message += "<a href='#demoz0' data-toggle='collapse'>keywords</a>";
+				message += "<div id ='demoz0' class = 'collapse'>";
 				message += "<ul class ='list-group'>";
 
-				for(var i = 0; i < clusters[0].words.length; i++)
-					message += "<li class = 'list-group-item'>" + clusters[0].words[i].text + " <b>(" + clusters[0].words[i].relevance +  ")</b></li>";
+				for(var i = 0; i < words.length; i++)
+					message += "<li class = 'list-group-item'>" + words[i].text + " <b>(" + words[i].relevance +  ")</b></li>";
 
+				message += "</div>";
 				message += "</ul>";
 				message += br + br;
 
@@ -226,8 +289,9 @@
 						message += "<a href='#demo2"+i+"' data-toggle='collapse'>centroid</a>";
 						message += "<div id ='demo2"+i+"' class = 'collapse'>";
 						message += "<ul class ='list-group'>";
-						for(var j = 0; j < clusters[i].words.length; j++)
-							message += "<li class = 'list-group-item'>" + clusters[i].words[j].text + " <b>(" + clusters[i].centroid[j] +  ")</b></li>";
+						for(var j = 0; j < words.length; j++)
+							if(clusters[i].centroid[j] !== 0)
+							message += "<li class = 'list-group-item'>" + words[j].text + " <b>(" + clusters[i].centroid[j] +  ")</b></li>";
 						message += "</ul>";
 						message += "</div>";
 
@@ -268,7 +332,8 @@
 		</script>
 
 	</div>
-
+</main>
+	</div>
 	</body>
 
 </html>

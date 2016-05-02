@@ -162,7 +162,6 @@ Twitter = new function() {
 
 		// Wait for the response.
 		Socket.on('demo_res' + connection_id, function(data) {
-			console.log('ok2');
 			var tweets = new Array();
 			// Convert the data to Tweet objects.
 			if(data.data.hasOwnProperty('statuses'))
