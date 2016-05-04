@@ -84,6 +84,23 @@ Twitter = new function() {
 	// getTrends(location: String, callback: function(error: Unknown, 
 	//		tweets: Array[Trend], response: Unknown))
 	this.getTrends = function(location, callback) {
+		var t1 = [
+			{ name: 'zacusa', tweet_volume: 100001 },
+			{ name: 'pirat', tweet_volume: 100001 },
+			{ name: 'mangusta', tweet_volume: 100001 },
+			{ name: 'cat', tweet_volume: 50001 },
+			{ name: '#hashtag', tweet_volume: 50001 },
+			{ name: 'haha', tweet_volume: 50001 },
+			{ name: 'numai', tweet_volume: 50001 },
+			{ name: 'zacusa', tweet_volume: 100 },
+			{ name: 'hole', tweet_volume: 100 },
+			{ name: 'iaurt', tweet_volume: 100 },
+			{ name: 'pfff', tweet_volume: 100 }
+		]
+
+		for(var i = 0; i < t1.length; ++i)
+			t1[i] = toTrend(t1[i]);
+
 		// TODO check for supported location.
 		// Make a request.
 		var connection_id = Socket.getNewConnectionId();

@@ -46,8 +46,18 @@ function toTweet(tweet) {
 		var milliseconds = 0;  // Cannot be retrieved - also don't care.
 
 		// Create the date object.
-		var created_at_date = new Date(year, month, day, hours, minutes,
-			seconds, milliseconds);
+		var created_at_date = new Date(tweet.created_at)
+		//var created_at_date = new Date(year, month, day, hours, minutes,
+		//	seconds, milliseconds);
+
+		tweet.created_at_obj = {
+			'year': year,
+			'month': month_string,
+			'day': day,
+			'hours': hours,
+			'minutes': minutes,
+			'seconds': seconds
+		}
 		// console.log(year + " " + month + " " + day + " " + hours + " " + 
 			// minutes + " " + seconds + " " + milliseconds);
 	}
@@ -56,6 +66,31 @@ function toTweet(tweet) {
 		return created_at_date;
 	}
 
+	tweet.getCreatedAtString = function() {
+		var now = Date.now();
+		var timeDiff = Math.abs(now - created_at_date);
+		var seconds = Math.ceil(timeDiff / (1000)); 
+
+		if(seconds < 60)
+			return seconds+'s ago'
+		seconds = Math.ceil(seconds / 60)
+
+		if(seconds < 60)
+			return seconds+'m ago'
+		seconds = Math.ceil(seconds / 60)
+
+		if(seconds < 24)
+			return seconds+'h ago'
+
+		seconds = Math.ceil(seconds / 24)
+
+		if(seconds < 7)
+			return seconds+'d ago'
+
+		var d = tweet.created_at_obj
+		d.hours = 1 + parseInt(d.hours)  // Adjust hour.
+		return d.hours+':'+d.minutes+' on '+d.day+' '+d.month
+	}
 
 	//
 	// text    (the text of the tweet).
@@ -67,7 +102,10 @@ function toTweet(tweet) {
 	}
 	// getText(): String
 	tweet.getText = function() {
-		return tweet.text;
+		if(tweet.hasText())
+			return tweet.text
+		else
+			return ""
 	}
 
 
@@ -112,7 +150,10 @@ function toTweet(tweet) {
 	}
 	// getRetweetCount(): Int
 	tweet.getRetweetCount = function() {
-		return tweet.retweet_count;
+		if(tweet.hasRetweetCount())
+			return tweet.retweet_count;
+		else
+			return 0
 	}
 
 
@@ -149,6 +190,33 @@ function toTweet(tweet) {
 			hashtags[i] = tweet.entities.hashtags[i].text;
 
 		return hashtags;
+	}
+
+	tweet.media_id = -1
+	tweet.hasMedia = function() {
+		if(tweet.media_id !== -1)
+			return true
+
+		if(! (tweet.hasOwnProperty('entities') &&
+			tweet.entities.hasOwnProperty('media')))
+			return false
+
+		for(var i = 0; i < tweet.entities.media.length; i++)
+			if(tweet.entities.media[i].hasOwnProperty('media_url') &&
+				tweet.entities.media[i].hasOwnProperty('type') &&
+				tweet.entities.media[i].type === 'photo') {
+				tweet.media_id = i
+				return true 
+			}
+	}
+
+	tweet.getMedia = function() {
+		tweet.main_media = { 
+			url: tweet.entities.media[tweet.media_id].media_url,
+			width: tweet.entities.media[tweet.media_id].sizes.small.w,
+			height: tweet.entities.media[tweet.media_id].sizes.small.h
+		}
+		return tweet.main_media
 	}
 
 

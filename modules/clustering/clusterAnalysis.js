@@ -142,18 +142,18 @@ function toClusterObject(cluster, callback) {
 	        callback();
 	      }
 
-	      Alchemy.sentimentTweetsAsArray(cluster.tweets,callbackSenti);
+	      Alchemy.tweetsAsArray('sentiment', cluster.tweets,callbackSenti);
 	    }
 
 
-    Alchemy.entitiesTweetsAsArray(cluster.tweets,callbackRelevant);
+    Alchemy.tweetsAsArray('entities', cluster.tweets,callbackRelevant);
 
   }
 
   return cluster;
 }
 // takes an array of clusters and converts each cluster into a clusterObject
-function clusterAnalysis(clusters) {
+function clusterAnalysis(clusters, onCompletion) {
 	var clusterObjects = [];
   	console.log("CLUSTERANALYSIS");
 
@@ -162,7 +162,7 @@ function clusterAnalysis(clusters) {
   	var callback = function() {
   		count -= 1;
   		if(count === 0)  // We are finished.
-  			showAnalysis(clusterObjects);
+  			onCompletion(clusterObjects);
   	}
 	
 	for (i = 0 ; i < clusters.length; i++) {
@@ -175,3 +175,101 @@ function clusterAnalysis(clusters) {
 	//Show(clusterObjects); ??
 }
 
+Analysis = new function() {
+	function removeUrls(tweets) {
+		var protomatch = /(https?|ftp):\/\/[\.[a-zA-Z0-9\/\-]+/; // NB: not '.*'
+ 		for(var i = 0; i < tweets.length; i++) {
+ 			tweets[i].backup_text = tweets[i].text
+			tweets[i].text = tweets[i].getText().replace(protomatch, '')
+			// console.log(tweets[i].getText())
+		}
+	}
+
+	function addUrlsBack(tweets) {
+		for(var i = 0; i < tweets.length; i++) {
+ 			tweets[i].text = tweets[i].backup_text
+			// console.log(tweets[i].getText())
+		}
+	}
+
+	this.analyzeCluster = function(cluster, onCompletion) {
+		// Number of questions.
+
+		var metrics = []
+
+		// Run all standard metrics.
+		for(var i = 0; i < cluster.tweets.length; i++) {
+			metrics[i] = {}
+			var tweet = cluster.tweets[i]
+
+			// Question.
+			if(tweet.getText().indexOf('?') !== -1)
+				metrics[i].question = 0.9
+			else 
+				metrics[i].question = 1.0
+
+			// Lengh of tweet.
+			if(tweet.getText().length > 69)
+				metrics[i].long = 1.0
+			else
+				metrics[i].long = 0.95
+
+			if(tweet.user.isVerified())
+				metrics[i].user_verified = 1.0
+			else
+				metrics[i].user_verified = 0.5
+
+			var followers = tweet.user.getFollowersCount()
+			if(followers > 10000)
+				metrics[i].user_popular = 1.0
+			else if(followers > 1000)
+				metrics[i].user_popular = 0.5
+			else
+				metrics[i].user_popular = 0.25
+
+			metrics[i].score = 
+				metrics[i].question * 
+				metrics[i].long * 
+				metrics[i].user_verified * 
+				metrics[i].user_popular
+		}
+
+		var analysis = { metrics: metrics }
+
+		// Remove urls.
+		removeUrls(cluster.tweets)
+
+		// Analyze sentiments.
+		var callback = function(sentiments, error) {
+			var negative = 0
+			var positive = 0
+
+ 			for(var i = 0; i < cluster.tweets.length; i++) {
+ 				// Save metric.
+ 				metrics[i].sentiment = sentiments[i]
+
+ 				if(sentiments[i] !== null) {
+ 					if(sentiments[i].type === 'positive')
+ 						positive += 1 //metrics[i].score
+ 					else if(sentiments[i].type === 'negative')
+ 						negative += 1 //metrics[i].score
+ 				}
+ 			}
+
+			analysis.positive = positive
+			analysis.negative = negative
+			analysis.likelihood = 100.0 * positive / (positive + negative)
+			onCompletion(analysis)
+		}
+
+		/*
+		var callback = function(keywords, error) {
+			onCompletion({ questions: count, keywords: keywords })
+
+		}
+
+		Alchemy.tweetsAsText('keywords', cluster.tweets, callback)
+		*/
+		Alchemy.tweetsAsArray('sentiment', cluster.tweets, callback)
+	}
+}

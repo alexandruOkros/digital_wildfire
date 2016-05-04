@@ -20,7 +20,7 @@ app.get('/', function(req, res){
 });
 
 app.use("/style", express.static(__dirname + '/style'));
-app.use("/bootstrap", express.static(__dirname + '/bootstrap'));
+app.use("/Chart.js-master", express.static(__dirname + '/Chart.js-master'));
 app.use("/modules", express.static(__dirname + '/modules'));
 // TODO. remove
 app.use("/simple.html", express.static(__dirname + '/simple.html'));
@@ -37,8 +37,8 @@ io.on('connection', function(socket) {
 			var connection_id = data.connection_id;
 
 			var callback = function(output) {
-				// if(channel === 'search')
-					// fs.writeFile("./data/tmp", JSON.stringify(output));
+				//if(channel === 'search')
+					//fs.writeFile("./data/tmp", JSON.stringify(output));
 
 				io.emit(channel + "_res" + connection_id, output);
 			}
@@ -176,7 +176,13 @@ Twitter = new function() {
 		if(data.query.q === "google telegram") {
 			results = JSON.parse(fs.readFileSync('./data/google_telegram', 'utf8'));
 			callback(results);
-		} else  // Return nothing.
+		} else if(data.query.q === "bitcoin") {
+			results = JSON.parse(fs.readFileSync('./data/bitcoin', 'utf8'));
+			callback(results);
+		} else if(data.query.q === "leicester") {
+			results = JSON.parse(fs.readFileSync('./data/leicester', 'utf8'));
+			callback(results);
+		} else // Return nothing.
 			callback({ error: "no demo data", data: {}, response: "" });
 	}
 }
@@ -187,7 +193,7 @@ Alchemy = new function() {
 	var key = "97a5ce54ae469563c4267cd097ad1d3965118c26";
 
 	// Constants.
-	var return_limit = 1000;  // i.e. return maximum no entities.
+	var return_limit = 50;  // i.e. return maximum no entities.
 
 	// Client.
 	var alchemy = new AlchemyAPI(key);
@@ -297,7 +303,6 @@ Cache = new function() {
 		'sentiment',
 		'keywords',
 		'entities',
-		'targetedSentiment',
 		'emotion'
 	]
 
@@ -332,14 +337,15 @@ Cache = new function() {
 	}
 
 	this.get = function(branch, tweet) {
-		if(tweet.hasOwnProperty('id') && data[branch].hasOwnProperty(tweet.id))
+		if(data.hasOwnProperty(branch) && tweet.hasOwnProperty('id') && 
+				data[branch].hasOwnProperty(tweet.id))
 			return data[branch][tweet.id]
 
 		return null
 	}
 
 	this.store = function(branch, tweet, value) {
-		if(tweet.hasOwnProperty('id')) {
+		if(tweet.hasOwnProperty('id') && data.hasOwnProperty(branch)) {
 			data[branch][tweet.id] = value
 			modified[branch] = true
 		}

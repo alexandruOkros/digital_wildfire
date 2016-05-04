@@ -1,16 +1,17 @@
 <html>
 
 	<head>
-		<title>Digital Wildfire Tracker</title>
+		<title>Rumour Tracker</title>
 
 		<!--  External.  -->
-		<link rel="stylesheet" href="bootstrap/bootstrap.css">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-		<script src="bootstrap/bootstrap.js"></script>
     	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 		<link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css">
 		<script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+		<script src="Chart.js-master/dist/Chart.min.js"></script>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
 
 		<!--  Local.  -->
 		<!--  Styling.  -->
@@ -41,34 +42,38 @@
 		<!--  Analysis.  -->
 		<script src = 'modules/clustering/clusterAnalysis.js'></script>
 
-		<!--  Smaller stuff.  -->
+		<!--  Other stuff.  -->
 		<script src = 'modules/other/Local.js'></script>
-		<script src = 'modules/other/Main.js'></script>
+		<script src = 'modules/other/UI.js'></script>
+		<script src = 'modules/other/Flow.js'></script>
 
 	</head>
 
 
 	<body>
 
+	<!-- Page -->
 	<div class = 'mdl-layout__container'>
 
-	<div class="demo-layout-transparent mdl-layout mdl-js-layout">
-	  <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 is-casting-shadow">
+	<!-- Header -->
+	<div class="mdl-layout mdl-js-layout">
+	  <header class="mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600 is-casting-shadow">
 	    <div class="mdl-layout__header-row">
 	      <!-- Title -->
-	      <span class="mdl-layout-title">Digital Wildfire Tracker</span>
-	      <!-- Add spacer, to align navigation to the right -->
-	      <div class="mdl-layout-spacer"></div>
+	      <span class="mdl-layout-title">Rumour Tracker</span>
 	      <!-- Navigation -->
+	      <div class="mdl-layout-spacer"></div>
+	      <!-- Search bar -->
 	      <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-    <label class="mdl-button mdl-js-button mdl-button--icon" for="search_2">
-      <i class="material-icons">search</i>
-    </label>
-    <div class="mdl-textfield__expandable-holder">
-      <input class="mdl-textfield__input" type="text" id="search_2">
-      <label class="mdl-textfield__label" for="sample-expandable">Expandable Input</label>
-    </div>
-  </div>
+			    <label class="mdl-button mdl-js-button mdl-button--icon" for="search_bar">
+			      <i class="material-icons">search</i>
+			    </label>
+			    <div class="mdl-textfield__expandable-holder">
+			      <input class="mdl-textfield__input" type="text" id="search_bar">
+			      <label class="mdl-textfield__label" for="search_bar">Expandable Input</label>
+			    </div>
+			  </div>
+			  <!-- Right hand side menu -->
 	     <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="hdrbtn">
             <i class="material-icons">more_vert</i>
           </button>
@@ -79,124 +84,176 @@
           </ul>
 	    </div>
 	  </header>
-	  <div class="mdl-layout__drawer">
-	    <span class="mdl-layout-title">Title</span>
-	    <nav class="mdl-navigation">
-	      <a class="mdl-navigation__link" href="">Link</a>
-	      <a class="mdl-navigation__link" href="">Link</a>
-	      <a class="mdl-navigation__link" href="">Link</a>
-	      <a class="mdl-navigation__link" href="">Link</a>
-	    </nav>
-	  </div>
-	  <main class="mdl-layout__content">
-	  
+	 
+	 	<!-- Content -->
+	 	<main id = 'main_content' class="mdl-layout__content">
+	 		<div class="mdl-grid">
+  			<div class="mdl-cell mdl-cell--9-col">
+					<!-- Panels -->
+					<div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+					  <div class="mdl-tabs__tab-bar">
+					    <a id = 'tweets-panel-link' href="#tweets-panel" class="mdl-tabs__tab is-active">Tweets</a>
+					    <a id = 'clusters-panel-link' href="#clusters-panel" class="mdl-tabs__tab">Clusters</a>
+					    <a id = 'analysis-panel-link' href="#analysis-panel" class="mdl-tabs__tab">Analysis</a>
+					    <a id = 'debug-panel-link' href="#debug-panel" class="mdl-tabs__tab">Debug info</a>
+					    <a id = 'settings-panel-link' href="#settings-panel" class="mdl-tabs__tab">Settings</a>
+					  </div>
 
-	<div class = 'container'>
+					  <!-- Tweets Panel -->
+					  <div class="mdl-tabs__panel is-active" id="tweets-panel">
+					  	<div id = "tweets_progress_bar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate" style='display: none'></div>
+  						<div id = 'tweets_panel_data'></div>
+					  </div>
 
-		<div class = "row">
-			<div class = "col-sm-9">
+					  <!-- Clusters Panel -->
+					  <div class="mdl-tabs__panel" id="clusters-panel">
+					  	<div id = "clusters_progress_bar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate" style='display: none'></div>
+  						<div id = 'clusters_panel_data'></div>
+					  </div>
 
-				<h5> Note: Selecting a location will significantly reduce the number of results.</h5>
+					  <!-- Analysis Panel-->
+					  <div class="mdl-tabs__panel" id="analysis-panel">
+					  	<div id = "analysis_progress_bar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate" style='display: none'></div>
+  						<div id = 'analysis_panel_data'></div>
+					  </div>
 
-				<div class="input-group">
-					<input id = 'search_bar' type = 'text' placeholder = 'search' 
-						class = 'form-control' aria-describedby = "search_button">
-					</input>
-					<span class="input-group-btn">
-						<button id = 'search_button' class="btn btn-default" type="button">
-							<span class="glyphicon glyphicon-search"></span> Search
+					  <!-- Debug panel. -->
+					  <div class="mdl-tabs__panel" id="debug-panel">
+							<div class = "row">
+								<div class = "col-sm-9">
+
+									<h5> Note: Selecting a location will significantly reduce the number of results.</h5>
+
+									<div class="panel">
+										<div class="panel-body">
+
+											<ul id = 'navbar' class="nav nav-pills">
+												<li><a href="#section_tweets">Tweets</a></li>
+												<li><a href="#section_clusters">Clusters</a></li>
+												<li><a href="#section_analysis">Analysis</a></li>
+											</ul>
+
+											<div id="section_tweets" class="container-fluid">
+												<h1>Tweets</h1>
+												<div id = 'tweets_data'></div>
+												<div id = 'tweets_data2'></div>
+											</div>
+											<div id="section_clusters" class="container-fluid">
+												<h1>Clusters</h1>
+												<div id = 'clusters_data'></div>
+											</div>
+											<div id="section_analysis" class="container-fluid">
+												<h1>Analysis</h1>
+												<div id = 'analysis_data'></div>
+											</div>
+
+										</div>
+									</div>
+
+								</div>
+								<div id = 'side_panel' class = "col-sm-3">
+									<h4>Trending in London</h4>
+									<div id = 'trending'>
+										Loading ...
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Settings panel. -->
+					  <div class="mdl-tabs__panel" id="settings-panel">
+
+					  	<label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" 
+					  			for="switch_demo">
+							  <input type="checkbox" id="switch_demo" class="mdl-switch__input" checked>
+							  <span class="mdl-switch__label">use demo data</span>
+							</label>
+
+							<label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="no_results_0">
+							  <input type="radio" id="no_results_0" class="mdl-radio__button" name="options" value="0" checked>
+							  <span class="mdl-radio__label">100</span>
+							</label>
+							<label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="no_results_1">
+							  <input type="radio" id="no_results_1" class="mdl-radio__button" name="options" value="1">
+							  <span class="mdl-radio__label">300</span>
+							</label>
+
+					  	<label for = "no_results_select">Number of results</label>
+									<select id = 'no_results_select' class = "form-control">
+										<option value = '0' selected = 'selected'>100</option>
+										<option value = '1'>1000</option>
+									</select>
+
+									<label for = "location_select">Location</label>
+									<select id = 'location_select' class = 'form-control'>
+										<option value = '0'>London</option>
+										<option value = '1' selected = 'selected'>Any</option>
+									</select>
+
+									<label for = "language_select">Language</label>
+									<select id = 'language_select' class = "form-control">
+										<option value = '0' selected = 'selected'>English</option>
+										<option value = '1'>Any</option>
+									</select>
+
+									<h3>Advanced search</h3>
+
+									<label for = "imported_data_select">Use test data from 23 Feb 2016</label>
+									<select id = 'imported_data_select' class = "form-control">
+										<option value = '0' selected = 'selected'>No</option>
+										<option value = '1'>12.50 - 13.10</option>
+										<option value = '2'>13.20 - 13.40</option>
+										<option value = '3'>14.10 - 14.30</option>
+										<option value = '4'>14.40 - 15.10</option>
+										<option value = '5'>Google Telegram</option>
+									</select>
+
+					  </div>
+
+				  </div>
+  			</div>
+		 		<!-- Right hand side panel -->
+  			<div class="mdl-cell mdl-cell--3-col">
+  				<h4>
+  					Trending in London
+  					<span id = 'trending_badge'></span>
+  					<button id = 'trending_button' class="mdl-button mdl-js-button 
+								mdl-js-ripple-effect" style = 'display: none'>
+  						dismiss
 						</button>
-					</span>
-				</div>
+						<script>
+							// Button click.
+							$('#trending_button').on('click', function(event) {
+								UI.dismissNewTrends()
+							})
+						</script>
+					</h4>
+  				<div id = "trends_progress_bar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
+  				<div id = 'trending_panel'></div>
+		    </div>
+	 	</main>
 
-				<label for = "no_results_select">Number of results</label>
-				<select id = 'no_results_select' class = "form-control">
-					<option value = '0' selected = 'selected'>100</option>
-					<option value = '1'>1000</option>
-				</select>
+	</div>
 
-				<label for = "location_select">Location</label>
-				<select id = 'location_select' class = 'form-control'>
-					<option value = '0'>London</option>
-					<option value = '1' selected = 'selected'>Any</option>
-				</select>
+	</div>
 
-				<label for = "language_select">Language</label>
-				<select id = 'language_select' class = "form-control">
-					<option value = '0' selected = 'selected'>English</option>
-					<option value = '1'>Any</option>
-				</select>
+	<!-- Snackbar -->
+	<div id="demo-toast-example" class="mdl-js-snackbar mdl-snackbar">
+  	<div class="mdl-snackbar__text"></div>
+  	<button class="mdl-snackbar__action" type="button"></button>
+	</div>
 
-				<h3>Advanced search</h3>
-
-				<label for = "imported_data_select">Use test data from 23 Feb 2016</label>
-				<select id = 'imported_data_select' class = "form-control">
-					<option value = '0' selected = 'selected'>No</option>
-					<option value = '1'>12.50 - 13.10</option>
-					<option value = '2'>13.20 - 13.40</option>
-					<option value = '3'>14.10 - 14.30</option>
-					<option value = '4'>14.40 - 15.10</option>
-					<option value = '5'>Google Telegram</option>
-				</select>
-
-				<div class="panel">
-					<div class="panel-body">
-
-						<ul id = 'navbar' class="nav nav-pills">
-							<li><a href="#section_tweets">Tweets</a></li>
-							<li><a href="#section_clusters">Clusters</a></li>
-							<li><a href="#section_analysis">Analysis</a></li>
-						</ul>
-
-						<div id="section_tweets" class="container-fluid">
-							<h1>Tweets</h1>
-							<div id = 'tweets_data'></div>
-							<div id = 'tweets_data2'></div>
-						</div>
-						<div id="section_clusters" class="container-fluid">
-							<h1>Clusters</h1>
-							<div id = 'clusters_data'></div>
-						</div>
-						<div id="section_analysis" class="container-fluid">
-							<h1>Analysis</h1>
-							<div id = 'analysis_data'></div>
-						</div>
-
-					</div>
-				</div>
-
-			</div>
-			<div id = 'side_panel' class = "col-sm-3">
-				<h4>Trending in London</h4>
-				<div id = 'trending'>
-					Loading ...
-				</div>
-			</div>
-		</div>
-
+		
 		<script>
 
 		//
 		// Events.
 		//
-
-		$("#search_button").on("click", function(event) {
-			search();
-		})
-
 		$("#search_bar").on("keyup", function(event) {
 			if(event.which == 13) {
-				search();
+				Flow.search();
 			}
 		})
-
-		$("#search_2").on("keyup", function(event) {
-			if(event.which == 13) {
-				search();
-			}
-		})
-
-		
 
 
 		/*
@@ -209,11 +266,7 @@
 		console.log(q.query.q)
 		*/
 
-		function doAnalysis() {
-			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
 
-			// clusterAnalysis(Local.clusters);
-		};
 
 		function doTestAlchemy() {
 			$("#analysis_data").html("Analysing ... <br> Module not here yet.");
@@ -259,81 +312,21 @@
 			Alchemy.sentimentTargetedArray(Local.tweets_from_search, "cat", callback);
 		};
 
-
-		var showClusters = function(clusters, words) {
-			var count = 0;
-			var message = "";
-			var br = "<br>";
-
-			if(clusters.length > 0) {
-
-				message += "<h4>Entities used for clustering (with relevance for the tweets): </h4>" + br;
-				message += "<a href='#demoz0' data-toggle='collapse'>keywords</a>";
-				message += "<div id ='demoz0' class = 'collapse'>";
-				message += "<ul class ='list-group'>";
-
-				for(var i = 0; i < words.length; i++)
-					message += "<li class = 'list-group-item'>" + words[i].text + " <b>(" + words[i].relevance +  ")</b></li>";
-
-				message += "</div>";
-				message += "</ul>";
-				message += br + br;
-
-				for(var i = 0; i < clusters.length; ++i)
-					if(clusters[i].tweets.length !== 0) {
-						count = count + 1;
-
-						message += "<h4>Cluster #" + count + " has " + clusters[i].tweets.length + " tweets.</h4>";
-
-						// Keywords.
-						message += "<a href='#demo2"+i+"' data-toggle='collapse'>centroid</a>";
-						message += "<div id ='demo2"+i+"' class = 'collapse'>";
-						message += "<ul class ='list-group'>";
-						for(var j = 0; j < words.length; j++)
-							if(clusters[i].centroid[j] !== 0)
-							message += "<li class = 'list-group-item'>" + words[j].text + " <b>(" + clusters[i].centroid[j] +  ")</b></li>";
-						message += "</ul>";
-						message += "</div>";
-
-						message += "<br>";
-						// Tweets.
-						message += "<a href='#demo"+i+"' data-toggle='collapse'>tweets</a>";
-						message += "<div id ='demo"+i+"' class = 'collapse'>";
-						message += "<ul class ='list-group'>";
-
-						for(var j = 0; j < clusters[i].tweets.length; j++)
-							message += "<li class = 'list-group-item'>" + clusters[i].tweets[j].getText() + "</li>";
-
-						message += "</ul>";
-						message += "</div>";
-					}
-			} else
-				message = "No clusters for data.";
-
-			$("#clusters_data").html("<h3>Clusters: " + count + "</h3>" + message);
-		}
-
-		var showAnalysis = function(clusters) {
-			var message = "";
-
-			for(var i = 0; i < clusters.length; i++) {
-				message += "<h4>Cluster #" + (i+1) + " has sentiment: " + clusters[i].average_sentiment + " </h4>";
-				message += "Popular entities: <ul class ='list-group'>";
-
-				for(var j = 0; j < clusters[i].popular_entities.length; j++)
-					message += "<li class = 'list-group-item'>" + clusters[i].popular_entities[j] + "</li>";
-
-				message += "</ul>";
-			}
-
-			$("#analysis_data").html(message);
-		}
-
 		</script>
 
-	</div>
-</main>
-	</div>
+
+		<!-- Late load scripts -->
+		<script src = 'modules/other/ComeIn.js'></script>
+
+		<script>
+			// Flow.search()
+			// UI.switchTabs('tweets', 'settings')
+
+
+			// Initialise.
+			Flow.initialise()
+		</script>
+
 	</body>
 
 </html>

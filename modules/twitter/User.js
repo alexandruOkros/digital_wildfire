@@ -97,7 +97,10 @@ function toUser(user) {
 	}
 	// getFollowersCount(): Int
 	user.getFollowersCount = function() {
-		return user.followers_count;
+		if(user.hasFollowersCount)
+			return user.followers_count
+		else
+			return 0
 	}
 
 

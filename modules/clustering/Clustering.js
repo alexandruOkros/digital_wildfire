@@ -202,6 +202,9 @@ Clustering = new function() {
     function easyClustering(centroids, tweets, keywords) {
         console.log("start of easyclustering");  // Info.
 
+        if(centroids.length === 0)
+            centroids = [[]]  // This solves a bug.
+
         // Initialise.
         var clusters = []
         for(var i = 0; i < centroids.length; i++)
@@ -298,7 +301,7 @@ Clustering = new function() {
 
         // If a cluster is included in another, join them (included keyword-wise).
         // TODO.
-        
+
         // Filter out empty clusters.
         clusters = clusters.filter(function(cluster) {
             return (cluster.tweets.length !== 0)

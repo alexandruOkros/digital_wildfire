@@ -1,0 +1,56 @@
+body {
+	background-color: #f5f5f5 !important;
+}
+
+.red_text {
+	color: rgb(244, 67, 54);
+}
+
+.small_text {
+	font-size: 12px;
+}
+
+.bold_trending {
+    font-weight: bold;
+}
+
+#tweets_panel_data {
+	width: 750px;
+	margin: auto;
+}
+
+#tweets_progress_bar {
+	margin: auto;
+	margin-top: 40px;
+}
+
+#clusters_progress_bar {
+	margin: auto;
+	margin-top: 40px;
+}
+
+#analysis_progress_bar {
+	margin: auto;
+	margin-top: 40px;
+}
+
+.module {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.come-in {
+  transform: translateY(150px);
+  animation: come-in 0.8s ease forwards;
+}
+.come-in:nth-child(odd) {
+  animation-duration: 0.6s;
+}
+.already-visible {
+  transform: translateY(0);
+  animation: none;
+}
+
+@keyframes come-in {
+  to { transform: translateY(0); }
+}
