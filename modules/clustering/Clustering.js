@@ -107,7 +107,7 @@ Clustering = new function() {
         var rounds = 0;
         // console.log("starting hardClustering loop");
         while (clusterCount > clusterNum && rounds < 5000) {
-            console.log(v.value);
+            // console.log(v.value);
             rounds = rounds + 1;
             // console.log("round: " + rounds);
             if (v.x === v.y) { // console.log("check2.1"); // if it's a difference bwteen the same element ignore it
@@ -277,7 +277,7 @@ Clustering = new function() {
         return clusters
     }
 
-    function cluster(tweetNum, clusterNum, tweets, importantKeywords, keywords, callback) {
+    function cluster(tweetNum, clusterNum, tweets, importantKeywords, keywords, callback, n_important) {
         // Pick a small batch of tweets for hardClustering.
         var chosenTweets = tweetChooser(tweetNum, keywords, tweets)
 
@@ -304,8 +304,36 @@ Clustering = new function() {
 
         // Filter out empty clusters.
         clusters = clusters.filter(function(cluster) {
-            return (cluster.tweets.length !== 0)
+            return (cluster.tweets.length > 1)
         })
+
+        // Compute relevance and sort by it.
+        for(var j = 0; j < clusters.length; j++) {
+            var found = new Array(n_important.length).fill(0)
+            var count = 0
+            var total = 0
+            for(var i = 0; i < clusters[j].centroid.length; i++)
+                for(var k = 0; k < n_important.length; k++)
+                    if(clusters[j].centroid[i] > 0 && keywords[i].text.toLowerCase().search(n_important[k].toLowerCase()) !== -1) {
+                        if(found[k] === 0) {
+                            count += 1
+                            found[k] = 2
+                            total += 2 * clusters[j].centroid[i]
+                        }
+                        found[k] += clusters[j].centroid[i]
+                        total += 1
+                    }
+                
+            var score = (total * (count / 2) / 3) / (n_important.length / 2)
+            score = Math.min(score, 4) * 25
+            score = Math.min(score, clusters[j].tweets.length)
+            score = Math.ceil(score)
+            // console.log(score)
+            clusters[j].relevance = score
+        }
+
+        var compareClusters = function (c1, c2) { return (c2.relevance - c1.relevance) };
+        clusters = clusters.sort(compareClusters)
 
         // Return clusters and the used keywords.
         callback({ clusters: clusters, keywords: keywords })
@@ -337,7 +365,7 @@ Clustering = new function() {
             // No important keywords.
             if(mark === false) important = null
 
-            cluster(N, k, tweets, important, keywords, callback)
+            cluster(N, k, tweets, important, keywords, callback, importantKeywords)
         }
 
         // Get the keywords for clustering

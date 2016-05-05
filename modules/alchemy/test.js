@@ -33,7 +33,7 @@ var t8 = 'earthquake nepal happened. \
     earthquake nepal. \
     there is no earthquake in nepal. \
     '
-var t9 = 'there is no in earthquake nepal.'
+var t9 = 'Ted cruz dropout'
 
 alchemy.apiKeyInfo({}, function(err, response) {
   if (err) throw err;

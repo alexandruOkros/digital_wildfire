@@ -5,8 +5,7 @@
 Flow = new function() {
 	this.initialise = function() {
 		// Start looking for trends.
-		// Flow.fetchTrending()
-
+		Flow.fetchTrending()
 	}
 
 	// Load trends.
@@ -39,12 +38,10 @@ Flow = new function() {
 			Flow.initialTweets(tweets)
 		}
 
-		if(query.query.which === -1)
-			Twitter.searchTweets(query, callback);  // Search live on twitter.
-		else if(query.query.which === 4)
+		if(query.query.demo === true)
 			Twitter.demo(query, callback);
 		else
-			Twitter.searchArchive(query, callback);  // Search the archieve
+			Twitter.searchTweets(query, callback);  // Search live on twitter.
 	};
 
 	this.initialTweets = function(tweets) {
@@ -53,15 +50,14 @@ Flow = new function() {
 
 		// Print the tweets.
 		UI.showTweets(tweets)
-		UI.testCluster(tweets)
-		return
+
 		if(tweets.length !== 0)
 			Flow.initialClustering(tweets)
 	}
 
 	this.initialClustering = function(tweets) {
 		UI.showLoadingClusters()
-		UI.switchTabs('tweets', 'clusters')
+		// UI.switchTabs('tweets', 'clusters')
 
 		// Get clusters.
 		var callback = function(data) {
@@ -81,10 +77,17 @@ Flow = new function() {
 	}
 
 	this.analyzeCluster = function(id) {
+		// Save local.
+		Local.cluster_id = id
+
+		UI.showLoadingAnalysis()
 		UI.switchTabs('clusters', 'analysis')
 
-		var callback = function(cluster_obj) {
-			UI.showAnalysis(cluster_obj)
+		var callback = function(analysis) {
+			// Save local.
+			Local.analysis = analysis
+
+			UI.showAnalysis(analysis)
 		}
 
 		// Analyze.

@@ -1,5 +1,5 @@
 //var PriorityQueue = require('./priority-queue.js');
-
+/*
 //returns an array with 'number' most occurring strings from array 'a'
 //if there are less than 'number' strings, the remaining entries in the returned array are all the empty string
 function modeCalc(a, number) {
@@ -88,7 +88,7 @@ function modeCalc(a, number) {
 
 
 
-
+/*
 //the get info method calls alchemy api. currently gives entities, 
 //relevant tweets and overall sentiment
 function toClusterObject(cluster, callback) {
@@ -152,6 +152,7 @@ function toClusterObject(cluster, callback) {
 
   return cluster;
 }
+
 // takes an array of clusters and converts each cluster into a clusterObject
 function clusterAnalysis(clusters, onCompletion) {
 	var clusterObjects = [];
@@ -175,7 +176,18 @@ function clusterAnalysis(clusters, onCompletion) {
 	//Show(clusterObjects); ??
 }
 
+*/
+
+
+
+
+
 Analysis = new function() {
+	function removeUrl(text) {
+		var protomatch = /(https?|ftp):\/\/[\.[a-zA-Z0-9\/\-]+/; // NB: not '.*'
+ 		return text.replace(protomatch, '')
+	}
+
 	function removeUrls(tweets) {
 		var protomatch = /(https?|ftp):\/\/[\.[a-zA-Z0-9\/\-]+/; // NB: not '.*'
  		for(var i = 0; i < tweets.length; i++) {
@@ -192,9 +204,247 @@ Analysis = new function() {
 		}
 	}
 
-	this.analyzeCluster = function(cluster, onCompletion) {
-		// Number of questions.
+	this.mostRelevantImage = function(cluster) {
+		// Find the most relevant picture.
+		var max = -1
+		var image1 = null
+		var image2 = null
 
+		for(var i = 0; i < cluster.tweets.length; i++)
+			if(cluster.tweets[i].hasMedia() && (max === -1 || cluster.tweets[i].getRetweetCount() > max)) {
+				max = cluster.tweets[i].getRetweetCount()
+				image1 = cluster.tweets[i].getMedia()
+				if(cluster.tweets[i].user.isVerified())
+					image2 = image1
+			}
+
+		if(image2 !== null)
+			return image2
+		else
+			return image1
+	}
+
+	this.getMostRelevantImages = function(cluster, max_n) {
+		// Comparator.
+		compareImportance = function(image1, image2)  {
+		    var count1 = image1.follow_count
+		    // if(image1.is_verified === true) count1 += 10000
+		    var count2 = image2.follow_count
+		    // if(image2.is_verified === true) count2 += 10000
+
+	    	return (count2 - count1)
+		}
+		var maxOrder = new PriorityQueue({comparator : compareImportance});
+
+		// Find the most relevant pictures.
+		var found = 0
+
+		for(var i = 0; i < cluster.tweets.length; i++)
+			if(cluster.tweets[i].hasMedia()) {
+				var follow_count = cluster.tweets[i].user.getFollowersCount()
+				var image = cluster.tweets[i].getMedia()
+				var is_verified = cluster.tweets[i].user.isVerified()
+				maxOrder.queue({ image: image, follow_count: follow_count, is_verified: is_verified })
+				found += 1
+			}
+
+		var images = []
+		for(var i = 0; i < found && i < max_n; i++) {
+			var image = maxOrder.dequeue()
+			// console.log(image)
+			images.push(image.image)
+		}
+
+		return images
+	}
+
+	this.getMostRelevantTweets = function(cluster, max_n) {
+		// Comparator.
+		compareImportance = function(a, b)  {
+		    var count1 = a.follow_count
+		    var count2 = b.follow_count
+
+	    	return (count2 - count1)
+		}
+		var maxOrder = new PriorityQueue({comparator : compareImportance});
+
+		// Find the most relevant tweets.
+		var found = 0
+
+		for(var i = 0; i < cluster.tweets.length; i++) {
+			var follow_count = cluster.tweets[i].user.getFollowersCount()
+			var is_verified = cluster.tweets[i].user.isVerified()
+			maxOrder.queue({ id: i, follow_count: follow_count, is_verified: is_verified })
+			found += 1
+		}
+
+		var tweets = []
+		for(var i = 0; i < found && i < max_n; i++) {
+			var tweet = maxOrder.dequeue()
+			// console.log(tweet)
+			tweets.push(cluster.tweets[tweet.id])
+		}
+
+		return tweets
+	}
+
+	this.getVerifiedUsersTalking = function(cluster, metrics, max_n) {
+		// Comparator.
+		compareImportance = function(a, b)  {
+		    var count1 = a.follow_count
+		    var count2 = b.follow_count
+
+	    	return (count2 - count1)
+		}
+		var proMaxOrder = new PriorityQueue({comparator : compareImportance});
+		var againstMaxOrder = new PriorityQueue({comparator : compareImportance});
+
+		var found1 = 0
+		var found2 = 0
+
+		for(var i = 0; i < cluster.tweets.length; i++)
+			if(metrics[i].sentiment !== null) {
+				var follow_count = cluster.tweets[i].user.getFollowersCount()
+				var is_verified = cluster.tweets[i].user.isVerified()
+				if(metrics[i].sentiment.type === 'positive') {
+					proMaxOrder.queue({ user: cluster.tweets[i].user, follow_count: follow_count, is_verified: is_verified })
+					found1 += 1
+				} else if(metrics[i].sentiment.type === 'negative') {
+					againstMaxOrder.queue({ user: cluster.tweets[i].user, follow_count: follow_count, is_verified: is_verified })
+					found2 += 1
+				}
+			}
+
+		var pro_users = []
+		for(var i = 0; i < found1 && pro_users.length < max_n; i++) {
+			var user = proMaxOrder.dequeue().user
+
+			// See if already added.
+			var mark = true
+			for(var j = 0; j < pro_users.length; j++)
+				if(pro_users[j].id === user.id) {
+					mark = false
+					break
+				}
+
+			if(mark === true) {
+				// console.log(user)
+				pro_users.push(user)
+			}
+		}
+
+		var against_users = []
+		for(var i = 0; i < found2 && against_users.length < max_n; i++) {
+			var user = againstMaxOrder.dequeue().user
+
+			// See if already added.
+			var mark = true
+			for(var j = 0; j < against_users.length; j++)
+				if(against_users[j].id === user.id) {
+					mark = false
+					break
+				}
+
+			if(mark === true) {
+				// console.log(user)
+				against_users.push(user)
+			}
+		}
+
+		return { pro: pro_users, against: against_users }
+	}
+
+	this.getGraphData = function(cluster, metrics) {
+		// Split in
+		var slices = Math.floor(cluster.tweets.length / 20)
+		if(slices < 20)
+			slices = 20
+
+		// Get graph boundaries.
+		var min_t = 1662024219000
+		var max_t = 0
+		for(var i = 0; i < cluster.tweets.length; i++)
+			if(metrics[i].sentiment !== null && metrics[i].sentiment !== 'neutral') {
+				var t = cluster.tweets[i].getCreatedAt().getTime()
+				if(t < min_t) min_t = t
+				if(t > max_t) max_t = t + 1
+			}
+
+		pro_data = new Array(slices).fill(0)
+		against_data = new Array(slices).fill(0)
+
+		for(var i = 0; i < cluster.tweets.length; i++)
+			if(metrics[i].sentiment !== null) {
+				var t = cluster.tweets[i].getCreatedAt().getTime()
+				var p = Math.floor(slices * 1.0 *  (t - min_t) / (max_t - min_t))
+				if(metrics[i].sentiment.type === 'positive') {
+					pro_data[p] += 1
+				} else if(metrics[i].sentiment.type === 'negative') {
+					against_data[p] += 1
+				}
+			}
+
+		// Labels.
+		var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+		var date = new Date(min_t)
+		labels = [date.getHours() + ':' + date.getMinutes() + ' '+ date.getDate() + ' ' + months[date.getMonth()]]
+		// for(var i = 0; i < slices / 3; i++) labels.push('')
+		//labels.push('14 Jun')
+		//date = new Date(new Date((max_t - min_t) / 3 + min_t) * 1000)
+		// labels.push(date.getHours() + ':' + date.getMinutes())
+		//labels.push(new Date((max_t - min_t) / 4 + min_t) * 1000)
+		//for(var i = 0; i < slices / 3; i++) labels.push('')
+		//labels.push('14 Jun')
+		//labels.push(new Date((max_t - min_t) / 2 + min_t) * 1000)
+		for(var i = 0; labels.length < slices - 1; i++) labels.push('')
+		date = new Date(max_t)
+		labels.push(date.getHours() + ':' + date.getMinutes() + ' '+ date.getDate() + ' ' + months[date.getMonth()])
+		//labels.push(new Date(max_t * 1000))
+		// console.log({ pro: pro_data, against: against_data })
+		return { pro: pro_data, against: against_data, labels: labels }
+	}
+
+	this.getSummary = function(cluster, n_max, onCompletion) {
+		var callback = function(keywords, error) {
+			// Important keywords for clustering.
+			var importantKeywords = Local.query.query.q.split(" ").filter(
+				function(word) { return (word.length !== 0) })
+
+			summary = []
+			for(var i = 0; i < keywords.length && summary.length < n_max; i++) {
+				var key = keywords[i].text
+
+				if(keywords[i].relevance < 0.3)
+					continue
+
+				if(key.split(' ').length < 3)
+					continue
+
+				var mark = false
+				for(var j = 0; j < importantKeywords.length; j++)
+					if(key.search(importantKeywords[i]) !== -1) {
+						mark = true
+						break
+					}
+
+				if(mark === false)
+					continue
+
+				if(key !== removeUrl(key))
+					continue
+
+				// console.log(key + ' ' + keywords[i].relevance)
+				summary.push(keywords[i])
+			}
+
+			onCompletion(summary)
+		}
+
+		// Compute summary from keywords.
+		Alchemy.tweetsAsText('keywords', cluster.tweets, callback)
+	}
+
+	function runMetrics(cluster) {
 		var metrics = []
 
 		// Run all standard metrics.
@@ -219,6 +469,7 @@ Analysis = new function() {
 			else
 				metrics[i].user_verified = 0.5
 
+			// Number of followers.
 			var followers = tweet.user.getFollowersCount()
 			if(followers > 10000)
 				metrics[i].user_popular = 1.0
@@ -227,6 +478,7 @@ Analysis = new function() {
 			else
 				metrics[i].user_popular = 0.25
 
+			// Total score.
 			metrics[i].score = 
 				metrics[i].question * 
 				metrics[i].long * 
@@ -234,18 +486,59 @@ Analysis = new function() {
 				metrics[i].user_popular
 		}
 
-		var analysis = { metrics: metrics }
+		return metrics
+	}
+
+	this.analyzeCluster = function(cluster, onCompletion) {
+		var analysis = {}
+		var reverse = false
+
+		// Asynchronous calls sync here.
+		var sync_count = 2
+		var sync = function() {
+			sync_count -= 1
+			// On full sync, return the analysis.
+			if(sync_count === 0)
+				onCompletion(analysis)
+		}
+
+		// Run standard metrics.
+		analysis.metrics = runMetrics(cluster)
+		var metrics = analysis.metrics
+
+		// Popular images.
+		analysis.images = this.getMostRelevantImages(cluster, 10)
+
+		// Popular tweets.
+		analysis.popular_tweets = this.getMostRelevantTweets(cluster, 20)
+
+		// Quick summary.
+		var summaryCallback = function(summary) {
+			analysis.summary = summary
+			sync()
+		}
+		this.getSummary(cluster, 10, summaryCallback)
 
 		// Remove urls.
 		removeUrls(cluster.tweets)
 
 		// Analyze sentiments.
 		var callback = function(sentiments, error) {
+			// Add urls back
+			addUrlsBack(cluster.tweets)
+
 			var negative = 0
 			var positive = 0
 
  			for(var i = 0; i < cluster.tweets.length; i++) {
  				// Save metric.
+ 				if(reverse === true) {
+ 					if(sentiments[i].type === 'positive')
+ 						sentiments[i].type = 'negative'
+ 					else if(sentiments[i].type === 'negative')
+ 						sentiments[i].type = 'positive'
+ 				}
+
  				metrics[i].sentiment = sentiments[i]
 
  				if(sentiments[i] !== null) {
@@ -259,17 +552,25 @@ Analysis = new function() {
 			analysis.positive = positive
 			analysis.negative = negative
 			analysis.likelihood = 100.0 * positive / (positive + negative)
-			onCompletion(analysis)
+
+			// Verified users.
+ 			analysis.verified_users = Analysis.getVerifiedUsersTalking(cluster, metrics, 5)
+
+ 			// Big graph data.
+ 			analysis.graph_data = Analysis.getGraphData(cluster, metrics)
+
+			sync()  // Sync.
 		}
 
-		/*
-		var callback = function(keywords, error) {
-			onCompletion({ questions: count, keywords: keywords })
+		var callback2 = function(sentiment, error) {
+			if(sentiment !== null && sentiment.type === 'negative') {
+				reverse = true
+				console.log('reverse')
+			}
 
+			Alchemy.tweetsAsArray('sentiment', cluster.tweets, callback)
 		}
 
-		Alchemy.tweetsAsText('keywords', cluster.tweets, callback)
-		*/
-		Alchemy.tweetsAsArray('sentiment', cluster.tweets, callback)
+		Alchemy.text('sentiment', Local.query.query.q, callback2)
 	}
 }

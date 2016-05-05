@@ -3,11 +3,23 @@
 UI = new function() {
 	// Switch context between tabs.
 	this.switchTabs = function(from, to) {
-		$('#' + to + '-panel-link').addClass('is-active')
 		$('#' + from + '-panel-link').removeClass('is-active')
-
 		$('#' + from + '-panel').removeClass('is-active')
+
 		$('#' + to + '-panel').addClass('is-active')
+		$('#' + to + '-panel-link').addClass('is-active')
+	}
+
+	// Switch context between tabs.
+	this.switchToSearch = function() {
+		$('#analysis-panel-link').removeClass('is-active')
+		$('#clusters-panel-link').removeClass('is-active')
+
+		$('#analysis-panel').removeClass('is-active')
+		$('#clusters-panel').removeClass('is-active')
+
+		$('#tweets-panel').addClass('is-active')
+		$('#tweets-panel-link').addClass('is-active')
 	}	
 
 	// Get the search parameters from the UI.
@@ -19,22 +31,30 @@ UI = new function() {
 		}
 
 		// Location.
-		if($('#location_select').val() === "0")
+		var location = $('input[name=location_results_radio]:checked').val()
+		if(location === "1")
 			query.geocode = Twitter.locations.London;
 
 		// Language.
-		if($('#language_select').val() === "0")
+		var language = $('input[name=language_radio]:checked').val()
+		if(language === "0")
 			query.lang = Twitter.languages.English;
 
-		// Data from the archive.
-		query.which = parseInt($('#imported_data_select').val()) - 1;
+		// Use demo data.
+		query.demo = $('#switch_demo').is(':checked')
 
 		// Parameters.
-		if($('#no_results_select').val() === "0")
-			params = { pages: 1 };
-		else
-			params = { pages: 3 };
-
+		var no_results = $('input[name=no_results_radio]:checked').val()
+		if(no_results === "0") {
+			params = { pages: 1 }
+			query.result_type = "mixed"
+		} else if(no_results === '1') {
+			params = { pages: 4 }
+			query.result_type = "mixed"
+		} else {
+			params = { pages: 10 }
+			// query.result_type = "mixed"
+		}
 
 		Local.query = { query: query, params: params };  // Save.
 		return Local.query;
@@ -45,7 +65,11 @@ UI = new function() {
 		UIDebug.showLoadingSearch()
 
 		$('#tweets_panel_data').html("")  // Hide previous content.
+		$('#clusters_panel_data').html('')
+		$('#analysis_panel_data').html('')
 		$('#tweets_progress_bar').show()
+
+		UI.switchToSearch()
 	}
 
 	this.showLoadingTrends = function() {
@@ -130,7 +154,7 @@ UI = new function() {
 	}
 
 	this.showTweets = function(tweets) {
-		UIDebug.showTweets(tweets)
+		// UIDebug.showTweets(tweets)
 
 		if(tweets.length !== 0) {
 			// Start grid
@@ -147,8 +171,12 @@ UI = new function() {
 						tweetToString(tweets[i]) +'</div>'
 
 			html += col1 + '</div>' + col2 + '</div></div>'
-		} else
-			var html = "No tweets found."
+		} else {
+			var html = '<div class="small_card white_bg mdl-shadow--2dp">\
+			  <div class="mdl-card__title">\
+			    <h2 class="mdl-card__title-text" style = "margin: auto">No tweets.</h2>\
+			  </div><div>'
+		}
 
 		$('#tweets_progress_bar').hide()  // Hide progress bar.
 		$('#tweets_panel_data').html(html)
@@ -212,104 +240,273 @@ UI = new function() {
 	function imageToString(image) {
 		var width = 330
 		var height = image.height * image.width / width
-		return '<div class="mdl-card__media"><img width = "'+width+'" \
+		return '<div class="mdl-card__media" style = "background-color: white"><img width = "'+width+'" \
 				height = "'+height+'" src = "' + image.url + '"></div>'
 	}
 
 	this.showLoadingClusters = function() {
 		$('#clusters_progress_bar').show()
+		$('#clusters_panel_data').html('')
+
+		// Show toast.
+		var message = { message: 'Starting clustering ...' }
+		document.querySelector('#demo-toast-example').MaterialSnackbar.showSnackbar(message)
+	
 	}
 
 	this.showClusters = function(clusters, keywords) {
 		// Debug.
-		UIDebug.showClusters(clusters, keywords)
+		// UIDebug.showClusters(clusters, keywords)
 
 		// Build the html code.
-		var html = '<div class="mdl-grid">'
+		var html = '<div style = "display: flex">'
 
 		for(var i = 0; i < clusters.length; i++)
-			html += '<div class="mdl-cell mdl-cell--12-col">' +
+			html += '<div class="panel_float" style = "margin-top: 20px; margin-bottom: 20px">' +
 				clusterToString(i, clusters[i], keywords) +'</div>'
 
 		html += '</div>'
 		$('#clusters_progress_bar').hide()  // Hide loading screen.
 		$('#clusters_panel_data').html(html)
 
+		// Show toast.
+		var message = { message: 'Clustering finished.' }
+		document.querySelector('#demo-toast-example').MaterialSnackbar.showSnackbar(message)
+	
+
 		// Create events.
 		var addEvent = function(id) {
+			// Add event for button.
 			$('#analyze_cluster_' + id).on('click', function(event) {
 				Flow.analyzeCluster(id)
 			})
+
+			// Set progress.
+			var pbar = document.querySelector("#cluster_relevance"+id);
+			componentHandler.upgradeElement(pbar)
+			pbar.MaterialProgress.setProgress(clusters[id].relevance)
 		}
 		for(var i = 0; i < clusters.length; i++)
 			addEvent(i)
 	}
 
 	function clusterToString(id, cluster, keywords) {
-		// Find the most relevant picture.
-		var max = -1
-		var image = null
-		for(var i = 0; i < cluster.tweets.length; i++)
-			if(cluster.tweets[i].hasMedia() && (max === -1 || cluster.tweets[i].getRetweetCount() > max)) {
-				max = cluster.tweets[i].getRetweetCount()
-				image = cluster.tweets[i].getMedia()
-			}
-
 		// Start a card.
 		var html = '<div class="demo-card-wide mdl-card mdl-shadow--2dp">'
 
 		// Image.
-		if(max !== -1)
+		var image = Analysis.mostRelevantImage(cluster)
+		if(image !== null)
 			html += imageToString(image)
 		
-		html += '<div class="mdl-card__supporting-text"> \
-			<br>Cluster #' + id + " has " + cluster.tweets.length + 
-			" tweets.<br>";
+		html += '<div class="mdl-card__title mdl-card--border">' + 
+					cluster.tweets.length + ' tweets</div> \
+				<div class="mdl-card__supporting-text"> \
+					<b>Cluster relevance</b> \
+					<div id="cluster_relevance'+id+'" class="mdl-progress \
+						mdl-js-progress" style = "margin: 5px 0px 12px 0px"></div> \
+					<b>Summary</b><br>'
 
 		for(var i = 0; i < cluster.centroid.length; i++)
 			if(cluster.centroid[i] !== 0)
-				html += keywords[i].text + ' (' + Math.round(cluster.centroid[i] * 100) / 100 + ')<br>'
+				html += keywords[i].text + ' ' + Math.round(cluster.centroid[i] * 100) + '%<br>'
 
 		html += '	</div> \
 				 	<div class="mdl-card__actions mdl-card--border"> \
     					<a id = "analyze_cluster_' + id + '" \
     						class="mdl-button mdl-button--colored mdl-js-button \
     						mdl-js-ripple-effect">Analyse</a> \
-       						<i class="material-icons" style = "float: right">cached</i> \
   					</div> \
   				</div>'
 
 		return html
 	}
 
+	this.showLoadingAnalysis = function() {
+		$('#analysis_progress_bar').show()
+		$('#analysis_panel_data').html('')
+	}
+
 	this.showAnalysis = function(analysis) {
-		UIDebug.showAnalysis(analysis)
+		// UIDebug.showAnalysis(analysis)
 
-		console.log(analysis)
+		// Grid.
+		html = '<div style = "display: flex; width: 1020px; margin: auto">'
+		// 1st column.
+		html += 	'<div class = "panel_float">'
 
-		var br = '<br>'
-
-		var html = 'Questions: ' + analysis.questions + br
-		html += 'Positive: ' + analysis.positive + br
-		html += 'Negative: ' + analysis.negative + br
-		html += 'Rumour likelihood: ' + analysis.likelihood + br
+		// Veracity graph.
 		html += veracityGraphToString()
 
-		/*
-		for(var i = 0; i < analysis.keywords.length; i++)
-			html += analysis.keywords[i].text + ' (' + analysis.keywords[i].relevance + ')' + br
-		*/
+		// Short summary.
+		html += summaryToCard(analysis.summary)
 
+		// Verified users pro.
+		html += verifiedUsersToCard(analysis.verified_users.pro, 'Verified users supporting the rumour')
+		html += verifiedUsersToCard(analysis.verified_users.against, 'Verified users opposing the rumour')
+		
+		// 2nd column.
+		html += '</div><div class = "panel_float">'
+
+		// Rate graph.
+		html += rateGraphToString()
+
+		// Popular tweets.
+		if(analysis.popular_tweets.length !== 0) {
+			html += sectionTitle('Popular tweets')
+			var col1 = '<div style = "padding-right: 20px">'
+			var col2 = '<div>'
+			for(var i = 0; i < analysis.popular_tweets.length; i++)
+				if(i % 2 === 0)
+					col1 += '<div class = "module2">' + tweetToString(analysis.popular_tweets[i]) + '</div>'
+				else
+					col2 += '<div class = "module2">' + tweetToString(analysis.popular_tweets[i]) + '</div>'
+			html += '<div style = "display: flex; margin-top: -20px">' + col1 + '</div>' + col2 + '</div>' + '</div>'
+		}
+
+		// Media.
+		if(analysis.images.length !== 0) {
+			html += sectionTitle('Images')
+			var col1 = '<div style = "padding-right: 20px">'
+			var col2 = '<div>'
+			for(var i = 0; i < analysis.images.length; i++)
+				if(i % 2 === 0)
+					col1 += '<div class="module2 white_bg mdl-shadow--2dp" style = "width: 330px">' + imageToString(analysis.images[i]) + '</div>'
+				else
+					col2 += '<div class="module2 white_bg mdl-shadow--2dp" style = "width: 330px">' + imageToString(analysis.images[i]) + '</div>'
+			html += '<div style = "display: flex; margin-top: -20px">' + col1 + '</div>' + col2 + '</div>' + '</div>'
+		}
+
+		// End.
+		html += '</div></div>'
+
+		$('#analysis_progress_bar').hide()  // Hide loading bar
 		$('#analysis_panel_data').html(html)
-		veracityGraphActivate(analysis.likelihood)
+
+		// Show toast.
+		var message = { message: 'Analysis finished.' }
+		document.querySelector('#demo-toast-example').MaterialSnackbar.showSnackbar(message)
+	
+		veracityGraphActivate(analysis.likelihood)  // Activate Veracity graph.
+		rateGraphActivate(analysis.graph_data)  // Activate Rate graph.
+
+		// Make them fade in.
+		var allMods = $(".module2");
+
+		allMods.each(function(i, el) {
+		  var el = $(el);
+		  if (el.visible(true)) {
+		    el.addClass("already-visible"); 
+		  } 
+		});
+
+		$('#main_content').scroll(function(event) {
+		  allMods.each(function(i, el) {
+		    var el = $(el);
+		    if (el.visible(true)) {
+		      el.addClass("come-in"); 
+		    } 
+		  });
+		});
+	}
+
+	function summaryToCard(summary) {
+		if(summary.length !== 0) {
+			var html = '<div class="module2 white_bg mdl-shadow--2dp" style = "width: 330px"> \
+						<div class="mdl-card__title"><h3 class ="mdl-card__title-text">Short Summary</h3></div> \
+					<div class = "mdl-card__supporting-text">'
+			for(var i = 0; i < summary.length; i++)
+				html += '<b>' + summary[i].text + '</b>, '
+				html = html.slice(0, -2)  // Last comma.
+			html += '</div></div>'
+		} else
+			var html = ''
+		return html
+	}
+
+	function verifiedUsersToCard(users, title) {
+		if(summary.length !== 0) {
+			var html = '<div class="module2 white_bg mdl-shadow--2dp" style = "width: 330px"> \
+						<div class="mdl-card__title"><h3 class ="mdl-card__title-text">'+title+'</h3></div> \
+					<div class = "mdl-card__supporting-text">'
+			for(var i = 0; i < users.length; i++)
+				html += '<b>@' + users[i].getScreenName() + '</b>, '
+			html = html.slice(0, -2)  // Last comma.
+			html += '</div></div>'
+		} else
+			var html = ''
+		return html
+	} 
+
+	function sectionTitle(title) {
+		return '<div class="module2 white_bg mdl-shadow--2dp" style = "width: 680px; margin-top: 40px"> \
+					<div class="mdl-card__title"><h3 class ="mdl-card__title-text">' + title + '</h3></div> \
+				</div>'
+	}
+
+	function rateGraphToString() {
+		return '<div class="module2 demo-card-wide mdl-card mdl-shadow--2dp" style = "width: 680px; height: 430px"> \
+					<div class="mdl-card__title mdl-card--border"> \
+				    	<h3 class="mdl-card__title-text">Tweets rate</h3> \
+					</div> \
+					<div class="mdl-card__supporting-text mdl-card--border" style = "width: 648px; height: 430px"> \
+						<canvas id="rateGraph" width="40" height="20"></canvas> \
+					</div> \
+				</div>'
+	}
+
+	function rateGraphActivate(data) {
+		var max = 200
+		data.pro = data.pro.map(function(value) {
+			if(value > max)
+				return max
+			else
+				return value
+		})
+		data.against = data.against.map(function(value) {
+			if(value > max)
+				return max
+			else
+				return value
+		})
+		labels = new Array(data.pro.length).fill('0')
+		// console.log(data)
+		// Create the chart.
+		var ctx = document.getElementById('rateGraph').getContext('2d');
+		var data = {
+			labels: data.labels,
+			datasets: [
+				{ label: 'For',
+				  data: data.pro,
+		          backgroundColor: 'rgba(17, 131, 132, 0.5)',
+            	  lineTension: 0.5,
+		          fill: true, 
+		      	},
+				{ label: 'Against',
+				  data: data.against,
+		          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            	  lineTension: 0.5,
+		          fill: true, 
+		      	}
+			]
+		}
+		var options = {
+			// legend: { display: false }
+            // scales: { yAxes: [{ type: 'logarithmic', id: "y-axis-0"}] }
+		}
+		var myLineChart = new Chart(ctx, {
+		    type: 'line',
+		    data: data,
+		    options: options
+		});
 	}
 
 	function veracityGraphToString() {
-		var html = '<div class="demo-card-wide mdl-card mdl-shadow--2dp" style = "width: 232px"> \
+		var html = '<div class="module2 demo-card-wide mdl-card mdl-shadow--2dp"> \
 						<div class="mdl-card__title mdl-card--border"> \
 						    <h3 class="mdl-card__title-text">Veracity</h3> \
 						</div> \
-  						<div class="mdl-card__supporting-text mdl-card--border" style = "width: 200px; height: 200px"> \
+  						<div class="mdl-card__supporting-text mdl-card--border" style = "width: 298px; height: 298px"> \
     						<canvas id="veracityGraph" width="20" height="20"></canvas> \
   						</div> \
   					</div>'
@@ -326,7 +523,7 @@ UI = new function() {
 			labels: ['True', 'False'],
 			datasets: [
 				{ data: [positive_percent, negative_percent],
-		          backgroundColor: ["#FF6384", "#fad1df"] }
+		          backgroundColor: ["#FF6384", "#fce8ef"] }
 			]
 		}
 		var options = {
@@ -356,15 +553,22 @@ UI = new function() {
 	}
 
 	this.testCluster = function(tweets) {
-		UI.switchTabs('tweets', 'clusters')
-		UI.showClusters(
-			[{ tweets: tweets, centroid: [0.91, 0.81, 0.09, 0.6, 0.5]}], 
-			[{ text: 'Google', relevance: 1 },
+		UI.switchTabs('tweets', 'analysis')
+		var clusters = [{ tweets: tweets, 
+			centroid: [0.91, 0.81, 0.09, 0.6, 0.5], 
+		   relevance: 80 }]
+		var keywords =
+			 [{ text: 'Google', relevance: 1 },
 			 { text: 'Telegram', relevance: 1 },
 			 { text: 'Google buyout rumour', relevance: 1 },
 			 { text: 'Telegram owner', relevance: 1 },
 			 { text: 'Telegram Joel', relevance: 1 }
-			])
+			]
+		Local.clusters = clusters
+		// UI.showClusters(, )
+
+
+		Flow.analyzeCluster(0)
 	}
 }
 
@@ -377,7 +581,6 @@ UIDebug = new function() {
 	}
 
 	this.showTweets = function(tweets) {
-		return
 		var html = "";
 
 		if(tweets.length !== 0) {
@@ -396,7 +599,6 @@ UIDebug = new function() {
 	}
 
 	this.showClusters = function(clusters, words) {
-		return
 		var count = 0;
 		var message = "";
 		var br = "<br>";
@@ -450,7 +652,6 @@ UIDebug = new function() {
 	}
 
 	this.showAnalysis = function(data) {
-		return
 		var message = "";
 
 		$("#analysis_data").html(message);

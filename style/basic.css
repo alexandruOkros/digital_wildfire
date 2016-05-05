@@ -34,9 +34,49 @@ body {
 	margin-top: 40px;
 }
 
+#clusters_panel_data {
+	margin-top: 20px;
+}
+
+#analysis_panel_data {
+	margin-top: 20px;
+}
+
+.small_card {
+	width: 500px;
+	/* height: 20px !important; */
+	/* max-height: 20px !important; */
+	/* overflow: auto; */
+	margin: 40px auto auto;
+	/* margin-top: 40px; */
+}
+
+
+.margi_sp {
+	margin: 40px auto auto;
+}
+
+.white_bg {
+	background-color: white;
+}
+
+.panel_float {
+	padding: 10px;
+	float: left;
+}
+
 .module {
 	margin-top: 20px;
 	margin-bottom: 20px;
+}
+
+.module2 {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.lmargin {
+	margin-left: 160px;
 }
 
 .come-in {

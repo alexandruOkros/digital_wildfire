@@ -37,8 +37,8 @@ io.on('connection', function(socket) {
 			var connection_id = data.connection_id;
 
 			var callback = function(output) {
-				//if(channel === 'search')
-					//fs.writeFile("./data/tmp", JSON.stringify(output));
+				// if(channel === 'search')
+					// fs.writeFile("./data/ted_cruz", JSON.stringify(output));
 
 				io.emit(channel + "_res" + connection_id, output);
 			}
@@ -173,14 +173,20 @@ Twitter = new function() {
 
 	// Get demo data.
 	this.demo = function(data, callback) {
-		if(data.query.q === "google telegram") {
+		if(data.query.q.toLowerCase().search('google') !== -1) {
 			results = JSON.parse(fs.readFileSync('./data/google_telegram', 'utf8'));
 			callback(results);
-		} else if(data.query.q === "bitcoin") {
+		} else if(data.query.q.toLowerCase().search('bitcoin') !== -1) {
 			results = JSON.parse(fs.readFileSync('./data/bitcoin', 'utf8'));
 			callback(results);
-		} else if(data.query.q === "leicester") {
+		} else if(data.query.q.toLowerCase().search('leicester') !== -1) {
 			results = JSON.parse(fs.readFileSync('./data/leicester', 'utf8'));
+			callback(results);
+		} else if(data.query.q.toLowerCase().search('obama') !== -1) {
+			results = JSON.parse(fs.readFileSync('./data/obama', 'utf8'));
+			callback(results);
+		} else if(data.query.q.toLowerCase().search('cruz') !== -1) {
+			results = JSON.parse(fs.readFileSync('./data/ted_cruz', 'utf8'));
 			callback(results);
 		} else // Return nothing.
 			callback({ error: "no demo data", data: {}, response: "" });

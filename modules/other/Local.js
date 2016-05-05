@@ -4,13 +4,20 @@
 
 Local = new function() {
 	// Query object for searches.
-	this.query = null;
+	this.query = null
 
 	// Tweets returned from the search.
-	this.tweets = null;
+	this.tweets = null
 
 	// Cluster data.
-	this.clusters = null;
+	this.clusters = null
+
+	// Keywords for clusters.
+	this.keywords = null
+
+	// Analysis.
+	this.cluster_id = 0
+	this.analysis = null
 
 	// Trends.
 	this.trends = []
