@@ -104,6 +104,9 @@ UI = new function() {
 		
 			// Show button.
 			$('#trending_button').show()
+
+			// Hide after 60 seconds.
+			setTimeout(function() { UI.dismissNewTrends() }, 60 * 1000)
 		}
 
 		$('#trends_progress_bar').hide()  // Hide loading bar.
